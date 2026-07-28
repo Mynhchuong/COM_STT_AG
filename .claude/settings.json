@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\\\\n\" http://localhost:5211/assets/fonts/nucleo-icons.eot)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\\\\n\" http://localhost:5211/assets/fonts/nucleo-icons.woff2)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\\\\n\" http://localhost:5211/assets/css/nucleo-icons.css)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\\\\n\" http://localhost:5211/assets/css/material-dashboard.min.css)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\\\\n\" http://localhost:5211/assets/fonts/nucleo-icons.ttf)",
+      "Bash(curl -sI http://localhost:5211/assets/fonts/nucleo-icons.woff2)",
+      "Bash(curl -sI http://localhost:5211/assets/fonts/nucleo-icons.ttf)",
+      "Bash(curl -s http://localhost:5211/assets/css/nucleo-icons.css)",
+      "Bash(pkill -f \"dotnet.*COM_STT_WEB\")",
+      "Bash(curl -sf http://localhost:5211/)",
+      "Bash(break)",
+      "Bash(ps -p 30395 -o pid,command)",
+      "Bash(kill -9 28460 28474)",
+      "Bash(curl -s http://localhost:5211/)"
+    ]
+  }
+}

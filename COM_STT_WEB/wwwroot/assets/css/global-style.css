@@ -1,0 +1,45 @@
+/* =============================================================
+   global-style.css
+   Dùng chung cho toàn bộ trang cần nút ẩn/hiện UI (header, filter)
+   Cách dùng:
+     - Link file này vào page cần dùng
+     - Thêm class  .ui-hideable  vào các block cần ẩn (title, filter…)
+     - Script global-function.js sẽ tự toggle class  body.hide-ui
+   ============================================================= */
+
+/* ── Ẩn tất cả element được đánh dấu khi body có class hide-ui ── */
+body.hide-ui .ui-hideable {
+    display: none !important;
+}
+
+/* ── Nút toggle nổi góc dưới phải ────────────────────────────── */
+.layout-toggle-btn {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    z-index: 9999;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 45, 98, 0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-size: 13px;
+}
+
+.layout-toggle-btn:hover {
+    background: rgba(0, 45, 98, 1);
+    transform: scale(1.1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.layout-toggle-btn:active {
+    transform: scale(0.95);
+}

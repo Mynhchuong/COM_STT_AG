@@ -1,0 +1,236 @@
+@using COM_STT_WEB.Helpers
+@{
+    var currentPath = Context.Request.Path.Value?.ToLower().TrimEnd('/') ?? "";
+    var menus = SideMenuBuilder.Build();
+    var menuThemes = new[]
+    {
+        "menu-theme-personal",
+        "menu-theme-clerk",
+        "menu-theme-manager",
+        "menu-theme-hr"
+    };
+}
+
+<style>
+    .menu-icon-shell,
+    .menu-child-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .menu-icon-shell {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        margin-right: 0.65rem;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10);
+    }
+
+    .menu-icon-shell .material-symbols-rounded {
+        font-size: 1.1rem;
+        color: #fff;
+    }
+
+    .menu-child-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        margin-right: 0.6rem;
+        background: rgba(148, 163, 184, 0.14);
+    }
+
+    .menu-child-icon .material-symbols-rounded {
+        font-size: 1rem;
+    }
+
+    .nav-link:hover .menu-icon-shell,
+    .nav-link:hover .menu-child-icon {
+        transform: translateY(-1px);
+    }
+
+    .menu-theme-personal > .nav-link .menu-icon-shell { background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); }
+    .menu-theme-personal .menu-child-icon,
+    .menu-theme-personal .menu-child-icon .material-symbols-rounded { color: #ea580c; }
+
+    .menu-theme-clerk > .nav-link .menu-icon-shell { background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%); }
+    .menu-theme-clerk .menu-child-icon,
+    .menu-theme-clerk .menu-child-icon .material-symbols-rounded { color: #0284c7; }
+
+    .menu-theme-manager > .nav-link .menu-icon-shell { background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); }
+    .menu-theme-manager .menu-child-icon,
+    .menu-theme-manager .menu-child-icon .material-symbols-rounded { color: #7c3aed; }
+
+    .menu-theme-hr > .nav-link .menu-icon-shell { background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%); }
+    .menu-theme-hr .menu-child-icon,
+    .menu-theme-hr .menu-child-icon .material-symbols-rounded { color: #059669; }
+
+    .nav-item { margin-bottom: 4px; }
+
+    .nav-link {
+        margin: 0.4rem 0.85rem;
+        padding: 0.85rem 1.1rem !important;
+        border-radius: 20px !important;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #64748b !important;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+    }
+
+    .nav-link:hover {
+        background-color: #f1f5f9;
+        color: #1e293b !important;
+        transform: translateX(5px);
+    }
+
+    .nav-link.active {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+        color: #fff !important;
+        font-weight: 700;
+        box-shadow: 0 12px 24px rgba(79, 70, 229, 0.25) !important;
+    }
+
+    .nav-link.active .menu-icon-shell { background: rgba(255, 255, 255, 0.2) !important; box-shadow: none; }
+    .nav-link.active .material-symbols-rounded { color: #fff !important; }
+    .nav-link.active .nav-link-text { color: #fff !important; }
+</style>
+
+<!-- ===== SIDENAV HEADER ===== -->
+<div class="sidenav-header">
+    <i class="material-symbols-rounded p-3 cursor-pointer text-dark opacity-5 position-absolute end-0 top-0 d-xl-none" id="iconSidenav">close</i>
+
+    <a class="navbar-brand m-0 d-flex align-items-center px-1 py-2" asp-area="" asp-controller="Home" asp-action="Index">
+        <img src="~/assets/img/logowebsmTO.png" class="navbar-brand-img" style="max-height:32px;" alt="COM STT" />
+        <span class="ms-2 font-weight-bold text-sm">COM STT</span>
+    </a>
+</div>
+
+<hr class="horizontal dark mt-0 mb-2" />
+
+<!-- ===== SEARCH ===== -->
+<div class="px-3 pb-2">
+    <div style="position:relative;">
+        <i class="material-symbols-rounded"
+           style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:1.05rem;color:#94a3b8;pointer-events:none;">search</i>
+        <input type="text" id="sidenavSearch" placeholder="Tìm chức năng..."
+               autocomplete="off"
+               style="width:100%;height:38px;border:1.5px solid #e2e8f0;border-radius:12px;
+                      padding:0 12px 0 34px;font-size:0.85rem;color:#1e293b;
+                      background:#f8fafc;outline:none;transition:all 0.2s;">
+    </div>
+</div>
+
+<!-- ===== SIDENAV MENU ===== -->
+<div class="collapse navbar-collapse w-auto max-height-vh-100 h-100" id="sidenav-collapse-main">
+    <ul class="navbar-nav">
+
+        @foreach (var menuEntry in menus.Where(m => m.VisibleWhen?.Invoke() ?? true).Select((menu, index) => new { menu, index }))
+        {
+            var menu = menuEntry.menu;
+            var themeClass = menuThemes[menuEntry.index % menuThemes.Length];
+            bool open = menu.Children.Any(c =>
+                !string.IsNullOrEmpty(c.Url) &&
+                currentPath.StartsWith(Url.Content(c.Url).ToLower())
+            );
+
+            <li class="nav-item mt-2 @themeClass">
+                <a class="nav-link text-dark d-flex justify-content-between align-items-center"
+                   data-bs-toggle="collapse"
+                   href="#@menu.Id"
+                   aria-expanded="@open.ToString().ToLower()">
+
+                    <span class="d-flex align-items-center">
+                        <span class="menu-icon-shell">
+                            <i class="material-symbols-rounded">@menu.Icon</i>
+                        </span>
+                        <span class="nav-link-text">@menu.Title</span>
+                    </span>
+
+                    <i class="material-symbols-rounded">expand_more</i>
+                </a>
+
+                <div class="collapse ps-3 @(open ? "show" : "")" id="@menu.Id">
+                    <ul class="navbar-nav">
+                        @foreach (var item in menu.Children.Where(c => c.VisibleWhen == null || c.VisibleWhen()))
+                        {
+                            bool active = !string.IsNullOrEmpty(item.Url) &&
+                                          currentPath.StartsWith(Url.Content(item.Url).ToLower());
+
+                            <li class="nav-item menu-child-item" data-search="@item.Title.ToLower()">
+                                <a class="nav-link text-dark rounded px-2 py-1 @(active ? "active fw-bold bg-light" : "")"
+                                   href="@Url.Content(item.Url ?? "#")">
+                                    <span class="menu-child-icon">
+                                        <i class="material-symbols-rounded">@item.Icon</i>
+                                    </span>
+                                    <span class="nav-link-text">@item.Title</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </li>
+        }
+
+    </ul>
+</div>
+
+<script>
+(function () {
+    var input = document.getElementById('sidenavSearch');
+    if (!input) return;
+
+    input.addEventListener('focus', function () {
+        this.style.borderColor = '#6366f1';
+        this.style.background = '#fff';
+        this.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.12)';
+    });
+    input.addEventListener('blur', function () {
+        this.style.borderColor = '#e2e8f0';
+        this.style.background = '#f8fafc';
+        this.style.boxShadow = 'none';
+    });
+
+    input.addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        var groups = document.querySelectorAll('#sidenav-collapse-main > ul > .nav-item');
+
+        groups.forEach(function (group) {
+            var collapseEl = group.querySelector('.collapse');
+            var children = group.querySelectorAll('.menu-child-item');
+            if (!children.length) return;
+
+            if (q === '') {
+                children.forEach(function (c) { c.style.display = ''; });
+                group.style.display = '';
+                if (collapseEl && !collapseEl.classList.contains('show')) {
+                    collapseEl.style.display = '';
+                }
+                return;
+            }
+
+            var matched = 0;
+            children.forEach(function (c) {
+                var title = c.getAttribute('data-search') || '';
+                if (title.includes(q)) {
+                    c.style.display = '';
+                    matched++;
+                } else {
+                    c.style.display = 'none';
+                }
+            });
+
+            if (matched > 0) {
+                group.style.display = '';
+                if (collapseEl) { collapseEl.style.display = 'block'; }
+            } else {
+                group.style.display = 'none';
+            }
+        });
+    });
+})();
+</script>
