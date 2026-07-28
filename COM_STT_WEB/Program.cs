@@ -1,7 +1,25 @@
+using COM_STT_WEB.API.Service;
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddHttpClient<AuthApiService>(client =>
+{
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"]
+                  ?? throw new InvalidOperationException("ApiSettings:BaseUrl not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/Login";
+        options.SlidingExpiration = false;
+    });
 
 var app = builder.Build();
 
@@ -16,6 +34,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

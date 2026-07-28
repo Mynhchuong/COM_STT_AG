@@ -1,0 +1,78 @@
+@model COM_STT_WEB.Models.Account.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Đăng nhập";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>@ViewData["Title"] - COM STT</title>
+
+    <link rel="icon" type="image/png" href="~/assets/img/favicon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <link id="pagestyle" href="~/assets/css/material-dashboard.min.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body class="bg-gray-100">
+    <main class="main-content mt-0">
+        <div class="page-header align-items-start min-vh-100" style="background-image: url('@Url.Content("~/login.jpg")'); background-size: cover; background-position: center;">
+            <span class="mask bg-gradient-dark opacity-6"></span>
+            <div class="container my-auto">
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-11 mx-auto">
+                        <div class="card z-index-0 fadeIn3 fadeIn mt-4">
+                            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                                <div class="bg-gradient-dark shadow-primary border-radius-lg py-3 pe-1 text-center">
+                                    <h4 class="text-white font-weight-bolder mb-0">COM STT</h4>
+                                    <p class="text-white mb-0 text-sm">Đăng nhập bằng mã nhân viên</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" role="form" class="text-start">
+                                    @Html.AntiForgeryToken()
+                                    <div asp-validation-summary="ModelOnly" class="text-danger text-sm mb-3"></div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="EmpCd" class="form-label"></label>
+                                        <input asp-for="EmpCd" class="form-control" autocomplete="username" autofocus />
+                                        <span asp-validation-for="EmpCd" class="text-danger text-sm"></span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label asp-for="Password" class="form-label"></label>
+                                        <input asp-for="Password" type="password" class="form-control" autocomplete="current-password" />
+                                        <span asp-validation-for="Password" class="text-danger text-sm"></span>
+                                    </div>
+
+                                    @* Checkbox viết tay (không asp-for): ASP.NET Core tự gắn required phía client
+                                       cho bool không nullable, khiến bỏ tick là jQuery validate chặn submit. *@
+                                    <div class="form-check form-switch mb-3">
+                                        <input type="checkbox" class="form-check-input" role="switch" id="RememberMe" name="RememberMe" value="true" checked="@Model.RememberMe" />
+                                        <input type="hidden" name="RememberMe" value="false" />
+                                        <label class="form-check-label text-sm" for="RememberMe">Ghi nhớ đăng nhập trên thiết bị này</label>
+                                    </div>
+
+                                    <div class="text-center">
+                                        <button type="submit" class="btn bg-gradient-dark w-100 mt-3 mb-0">Đăng nhập</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="~/assets/js/core/popper.min.js"></script>
+    <script src="~/assets/js/core/bootstrap.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+</body>
+</html>

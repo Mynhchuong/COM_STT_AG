@@ -1,9 +1,12 @@
 using System.Diagnostics;
+using COM_STT_WEB.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using COM_STT_WEB.Models;
 
 namespace COM_STT_WEB.Controllers;
 
+[Authorize]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
@@ -15,7 +18,8 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
-        return View();
+        var employee = AuthHelper.GetCurrentUser(User);
+        return View(employee);
     }
 
     public IActionResult Privacy()
@@ -23,6 +27,7 @@ public class HomeController : Controller
         return View();
     }
 
+    [AllowAnonymous]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

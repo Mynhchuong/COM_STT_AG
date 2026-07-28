@@ -1,0 +1,32 @@
+@model COM_STT_WEB.Models.Account.EmployeeInfo
+@{
+    ViewData["Title"] = "Trang cá nhân";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header pb-0 d-flex align-items-center gap-3">
+                <div class="icon icon-shape icon-lg bg-gradient-dark shadow text-center border-radius-lg d-flex align-items-center justify-content-center">
+                    <i class="material-symbols-rounded text-white" style="font-size:1.75rem;" aria-hidden="true">badge</i>
+                </div>
+                <div>
+                    <h5 class="mb-0 vni-name">@Model?.FullName</h5>
+                    <p class="text-secondary text-sm mb-0">Mã nhân viên: @Model?.EmpCd</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <p class="text-secondary text-sm mb-1">Phòng ban</p>
+                        <p class="mb-0 font-weight-bold">@Model?.DeptNm <span class="text-secondary text-xs">(@Model?.DeptCd)</span></p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <p class="text-secondary text-sm mb-1">Line</p>
+                        <p class="mb-0 font-weight-bold">@(Model?.LineCd ?? "—")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -18,8 +18,9 @@ public static class SideMenuBuilder
                 Icon = "home",
                 Children = new List<SideMenuItem>
                 {
-                    new SideMenuItem { Title = "Tổng quan", Url = "~/Home/Index",   Icon = "dashboard" },
-                    new SideMenuItem { Title = "Chính sách", Url = "~/Home/Privacy", Icon = "policy"    },
+                    new SideMenuItem { Title = "Tổng quan", Url = "~/Home/Index",       Icon = "dashboard" },
+                    new SideMenuItem { Title = "Trang cá nhân", Url = "~/Profile/Index", Icon = "badge"     },
+                    new SideMenuItem { Title = "Chính sách", Url = "~/Home/Privacy",    Icon = "policy"    },
                 }
             },
         };

@@ -14,7 +14,8 @@
       "Bash(break)",
       "Bash(ps -p 30395 -o pid,command)",
       "Bash(kill -9 28460 28474)",
-      "Bash(curl -s http://localhost:5211/)"
+      "Bash(curl -s http://localhost:5211/)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

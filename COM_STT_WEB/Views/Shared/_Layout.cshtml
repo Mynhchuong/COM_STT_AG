@@ -21,6 +21,9 @@
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
+@{
+    var currentUser = COM_STT_WEB.Helpers.AuthHelper.GetCurrentUser(User);
+}
 <body class="g-sidenav-show bg-gray-100">
 
     <div class="sidenav-backdrop" id="sidenavBackdrop"></div>
@@ -43,6 +46,20 @@
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
                     <div class="ms-md-auto pe-md-3 d-flex align-items-center"></div>
                     <ul class="navbar-nav justify-content-end">
+                        @if (currentUser != null)
+                        {
+                            <li class="nav-item d-flex align-items-center me-2">
+                                <span class="text-sm text-dark vni-name d-none d-sm-inline">@currentUser.FullName</span>
+                            </li>
+                            <li class="nav-item d-flex align-items-center">
+                                <form asp-controller="Account" asp-action="Logout" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="nav-link text-body p-0 border-0 bg-transparent" title="Đăng xuất">
+                                        <i class="material-symbols-rounded">logout</i>
+                                    </button>
+                                </form>
+                            </li>
+                        }
                         <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
                             <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
                                 <div class="sidenav-toggler-inner">

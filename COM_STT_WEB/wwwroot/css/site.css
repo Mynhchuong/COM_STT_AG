@@ -1,7 +1,36 @@
 /* Mobile-first overrides on top of Material Dashboard theme */
 
+/* Font tiếng Việt cũ (bảng mã VNI) dùng cho họ tên lấy từ HRMS.ECM100.CNAME —
+   dữ liệu KHÔNG phải Unicode, phải hiển thị đúng bằng font gốc này, không convert. */
+@font-face {
+  font-family: 'VNITimes';
+  src: url('../assets/fonts/Vnitbi__.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.vni-name {
+  font-family: 'VNITimes', 'Inter', sans-serif;
+}
+
 body {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Quick-access tiles (Trang chủ) */
+.quick-tile {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.quick-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.quick-tile:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 /* Backdrop behind the drawer sidenav on mobile/tablet (< 1200px) */
