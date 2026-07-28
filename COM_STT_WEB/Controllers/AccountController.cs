@@ -83,6 +83,36 @@ public class AccountController : Controller
         return RedirectToAction("Login");
     }
 
+    [Authorize]
+    [HttpGet]
+    public IActionResult ChangePassword()
+    {
+        return View(new ChangePasswordViewModel());
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var empCd = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        var result = await _authApiService.ChangePasswordAsync(empCd, model.OldPassword, model.NewPassword);
+
+        if (!result.Success)
+        {
+            ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Đổi mật khẩu thất bại.");
+            return View(model);
+        }
+
+        // Đổi mật khẩu xong bắt đăng nhập lại bằng mật khẩu mới — vừa an toàn hơn, vừa xác nhận luôn mật khẩu mới đúng.
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["SuccessMessage"] = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.";
+        return RedirectToAction("Login");
+    }
+
     // Nếu phiên đã hết hạn và người dùng bấm "Đăng xuất", Logout ([Authorize], chỉ nhận POST)
     // sẽ tự bounce về Login kèm ReturnUrl=/Account/Logout. Đăng nhập lại xong mà redirect thẳng
     // vào ReturnUrl đó thì dính 404 (Logout không có GET). Chặn các action Account trong ReturnUrl.

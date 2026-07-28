@@ -50,6 +50,44 @@ public class AuthService
         return LoginResult.Ok(row.ToEmployeeInfo());
     }
 
+    public async Task<ChangePasswordResult> ChangePasswordAsync(string empCd, string oldPassword, string newPassword)
+    {
+        empCd = (empCd ?? string.Empty).Trim();
+        oldPassword = (oldPassword ?? string.Empty).Trim();
+        newPassword = (newPassword ?? string.Empty).Trim();
+
+        if (string.IsNullOrEmpty(empCd) || string.IsNullOrEmpty(oldPassword) || string.IsNullOrEmpty(newPassword))
+            return ChangePasswordResult.Fail("Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới.");
+
+        // Cột I_PASSWORD trên MES.TRTB_M_USER là VARCHAR2(10) — mật khẩu mới không được vượt quá độ dài này.
+        if (newPassword.Length > 10)
+            return ChangePasswordResult.Fail("Mật khẩu mới tối đa 10 ký tự.");
+
+        const string checkSql = @"
+            SELECT COUNT(*) AS CNT
+            FROM MES.TRTB_M_USER
+            WHERE I_EMP_NO = :empCd AND I_PASSWORD = :oldPassword";
+
+        var matches = await _db.ExecuteQueryAsync(checkSql,
+            r => Convert.ToInt32(r["CNT"]),
+            new OracleParameter("empCd", empCd),
+            new OracleParameter("oldPassword", oldPassword));
+
+        if (matches.FirstOrDefault() != 1)
+            return ChangePasswordResult.Fail("Mật khẩu hiện tại không đúng.");
+
+        const string updateSql = @"
+            UPDATE MES.TRTB_M_USER
+               SET I_PASSWORD = :newPassword
+             WHERE I_EMP_NO = :empCd";
+
+        await _db.ExecuteNonQueryAsync(updateSql,
+            new OracleParameter("newPassword", newPassword),
+            new OracleParameter("empCd", empCd));
+
+        return ChangePasswordResult.Ok();
+    }
+
     private sealed record EmployeeRow(
         string EmpCd, string NName, string DeptCd, string? DeptNm, string? LineCd,
         string? CName, string? JeaJikGb)

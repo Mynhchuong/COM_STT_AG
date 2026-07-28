@@ -19,9 +19,8 @@ public static class SideMenuBuilder
                 Children = new List<SideMenuItem>
                 {
                     new SideMenuItem { Title = "Tổng quan", Url = "~/Home/Index",       Icon = "dashboard" },
-                    new SideMenuItem { Title = "Trang cá nhân", Url = "~/Profile/Index", Icon = "badge"     },
                     new SideMenuItem { Title = "Test scan hàng loạt", Url = "~/Scan/Index", Icon = "qr_code_scanner" },
-                    new SideMenuItem { Title = "Chính sách", Url = "~/Home/Privacy",    Icon = "policy"    },
+                    new SideMenuItem { Title = "Đổi mật khẩu", Url = "~/Account/ChangePassword", Icon = "lock_reset" },
                 }
             },
         };
