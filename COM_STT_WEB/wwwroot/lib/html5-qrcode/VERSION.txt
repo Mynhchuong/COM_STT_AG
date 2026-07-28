@@ -1,0 +1,1 @@
+html5-qrcode v2.3.8 (MIT) - https://github.com/mebjas/html5-qrcode

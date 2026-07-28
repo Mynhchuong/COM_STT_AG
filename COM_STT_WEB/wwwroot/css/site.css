@@ -18,6 +18,17 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Viền input rõ hơn — mặc định của theme (#d2d6da) quá mờ, gần như không thấy */
+.form-control {
+  border: 1.5px solid #adb5bd;
+  padding: 0.6rem 0.85rem;
+}
+
+.form-control:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
 /* Quick-access tiles (Trang chủ) */
 .quick-tile {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
