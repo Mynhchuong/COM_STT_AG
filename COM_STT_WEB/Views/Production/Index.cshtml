@@ -99,9 +99,14 @@
                             <p class="text-white opacity-8 text-xs mb-0 ps-1">Danh sách đợt đăng ký và quét mã PCard</p>
                         </div>
                     </div>
-                    <a asp-action="Create" class="btn bg-gradient-dark mb-0 d-flex align-items-center justify-content-center gap-2 py-3 px-4" style="border-radius:12px; font-weight:800; font-size:0.95rem;">
-                        <i class="material-symbols-rounded" style="font-size:22px;">add_circle</i>ĐĂNG KÝ MỚI
-                    </a>
+                    <div class="d-flex align-items-center gap-2">
+                        <a asp-action="Create" class="btn bg-gradient-dark mb-0 d-flex align-items-center justify-content-center gap-2 py-3 px-4" style="border-radius:12px; font-weight:800; font-size:0.95rem;">
+                            <i class="material-symbols-rounded" style="font-size:22px;">add_circle</i>ĐĂNG KÝ MỚI
+                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white mb-0 d-flex align-items-center justify-content-center p-0 flex-shrink-0" style="width:48px; height:48px; border-radius:12px;" title="Về trang chủ">
+                            <i class="material-symbols-rounded" style="font-size:22px;">home</i>
+                        </a>
+                    </div>
                 </div>
             </div>
 

@@ -9,7 +9,8 @@
         const cardNoInput = document.getElementById('cardNoInput');
         const btnLookup = document.getElementById('btnLookup');
         const lookupMessage = document.getElementById('lookupMessage');
-        const cardInfoPanel = document.getElementById('cardInfoPanel');
+        const scannedListContainer = document.getElementById('scannedListContainer');
+        const scannedCountBadge = document.getElementById('scannedCount');
         const emptyState = document.getElementById('emptyState');
 
         let html5QrCode = null;
@@ -20,7 +21,10 @@
         let nativeDetecting = false;
         let usingNativeMulti = false;
         let scannerRunning = false;
-        let lastLookupCode = '';
+
+        // Chống quét trùng: mỗi PCARD chỉ vào danh sách 1 lần
+        const scannedCards = new Set();
+        let lastLookupInFlight = '';
 
         function showMessage(text, isError) {
             if (!lookupMessage) return;
@@ -37,26 +41,69 @@
             if (navigator.vibrate) navigator.vibrate(success ? 120 : [100, 60, 100]);
         }
 
-        function fillInfo(data) {
-            document.getElementById('infoICardNo').textContent = data.I_CARD_NO ?? '';
-            document.getElementById('infoStatus').textContent = data.STATUS ?? '';
-            document.getElementById('infoQQty').textContent = data.Q_QTY ?? '';
-            document.getElementById('infoCOrdOp').textContent = data.C_ORD_OP ?? '';
-            document.getElementById('infoCLine').textContent = data.C_LINE ?? '';
-            document.getElementById('infoIPartsNo').textContent = data.I_PARTS_NO ?? '';
-            document.getElementById('infoCStyle').textContent = data.C_STYLE ?? '';
-            document.getElementById('infoFClose').textContent = data.F_CLOSE ?? '';
-            document.getElementById('infoQPlan').textContent = data.Q_PLAN ?? '';
-            document.getElementById('infoQGather').textContent = data.Q_GATHER ?? '';
+        function updateCount() {
+            if (scannedCountBadge) {
+                scannedCountBadge.textContent = scannedCards.size + ' thẻ';
+            }
+        }
+
+        function removeCard(cardNo) {
+            const el = document.getElementById('card-' + cardNo);
+            if (el) el.remove();
+            scannedCards.delete(cardNo);
+            updateCount();
+            if (scannedCards.size === 0) {
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function addCardToList(data) {
             emptyState.style.display = 'none';
-            cardInfoPanel.style.display = 'block';
+
+            const item = document.createElement('div');
+            item.className = 'scanned-card-item new-scan mb-2 p-3 border-radius-lg';
+            item.id = 'card-' + data.I_CARD_NO;
+            item.dataset.card = data.I_CARD_NO;
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                            <strong class="text-dark text-sm">${data.I_CARD_NO}</strong>
+                            <span class="badge badge-sm bg-gradient-secondary">${data.STATUS ?? ''}</span>
+                        </div>
+                        <div class="text-xs text-secondary">Style: ${data.C_STYLE ?? ''} · Line: ${data.C_LINE ?? ''} · Parts: ${data.I_PARTS_NO ?? ''}</div>
+                        <div class="text-xs text-secondary">Qty: ${data.Q_QTY ?? ''} · Plan: ${data.Q_PLAN ?? ''} · Gather: ${data.Q_GATHER ?? ''} · Close: ${data.F_CLOSE ?? ''}</div>
+                    </div>
+                    <button type="button" class="btn btn-link text-danger p-0 mb-0 btn-remove-card" data-card="${data.I_CARD_NO}" aria-label="Xoá">
+                        <i class="material-symbols-rounded">close</i>
+                    </button>
+                </div>
+            `;
+            item.querySelector('.btn-remove-card').addEventListener('click', function () {
+                removeCard(data.I_CARD_NO);
+            });
+            scannedListContainer.insertBefore(item, scannedListContainer.firstChild);
+
+            setTimeout(function () {
+                item.classList.remove('new-scan');
+            }, 2000);
+
+            scannedCards.add(data.I_CARD_NO);
+            updateCount();
         }
 
         async function lookupCard(cardNo) {
             if (!cardNo) return;
-            // Chặn quét trùng liên tiếp cùng 1 mã (camera bắt liên tục nhiều khung hình/giây)
-            if (cardNo === lastLookupCode) return;
-            lastLookupCode = cardNo;
+
+            // Đã có trong danh sách rồi -> báo trùng, không gọi API lại
+            if (scannedCards.has(cardNo)) {
+                showMessage('PCARD ' + cardNo + ' đã có trong danh sách rồi!', true);
+                flashReader(false);
+                return;
+            }
+            // Chặn quét trùng liên tiếp cùng 1 mã trong lúc đang chờ API trả lời
+            if (cardNo === lastLookupInFlight) return;
+            lastLookupInFlight = cardNo;
 
             showMessage('Đang tra cứu ' + cardNo + '...', false);
 
@@ -66,11 +113,9 @@
 
                 if (res.ok && data.success) {
                     showMessage('', false);
-                    fillInfo(data.data);
+                    addCardToList(data.data);
                     flashReader(true);
                 } else {
-                    cardInfoPanel.style.display = 'none';
-                    emptyState.style.display = 'block';
                     showMessage(data.message || 'Không tìm thấy PCARD này.', true);
                     flashReader(false);
                 }
@@ -79,10 +124,7 @@
                 showMessage('Lỗi kết nối máy chủ!', true);
                 flashReader(false);
             } finally {
-                // Cho phép quét lại cùng mã sau 1.5s (VD: quét nhầm rồi quét lại)
-                setTimeout(function () {
-                    if (lastLookupCode === cardNo) lastLookupCode = '';
-                }, 1500);
+                lastLookupInFlight = '';
             }
         }
 
@@ -90,7 +132,6 @@
         function submitManual() {
             const code = cardNoInput.value.trim().toUpperCase();
             if (!code) return;
-            lastLookupCode = ''; // nhập tay luôn cho tra cứu, kể cả trùng mã lần trước
             lookupCard(code);
             cardNoInput.value = '';
             cardNoInput.focus();
