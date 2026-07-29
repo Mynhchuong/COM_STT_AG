@@ -44,6 +44,16 @@ body {
   box-shadow: none;
 }
 
+/* Nút ẩn/hiện sidenav trên desktop (>= 1200px) — trượt hẳn ra ngoài, main-content chiếm lại full width */
+@media (min-width: 1200px) {
+  body.sidenav-collapsed .sidenav {
+    transform: translateX(-120%);
+  }
+  body.sidenav-collapsed .main-content {
+    margin-left: 0 !important;
+  }
+}
+
 /* Backdrop behind the drawer sidenav on mobile/tablet (< 1200px) */
 .sidenav-backdrop {
   display: none;

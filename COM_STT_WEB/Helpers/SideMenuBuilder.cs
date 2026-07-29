@@ -20,6 +20,10 @@ public static class SideMenuBuilder
                 {
                     new SideMenuItem { Title = "Tổng quan", Url = "~/Home/Index",       Icon = "dashboard" },
                     new SideMenuItem { Title = "Test scan hàng loạt", Url = "~/Scan/Index", Icon = "qr_code_scanner" },
+                    new SideMenuItem { Title = "Sản xuất", Url = "~/Production/Index", Icon = "precision_manufacturing" },
+                    new SideMenuItem { Title = "QC", Url = "~/Qc/Index", Icon = "verified" },
+                    new SideMenuItem { Title = "Báo cáo", Url = "~/Report/Index", Icon = "bar_chart" },
+                    new SideMenuItem { Title = "Nhân viên giao hàng", Url = "~/Delivery/Index", Icon = "local_shipping" },
                     new SideMenuItem { Title = "Đổi mật khẩu", Url = "~/Account/ChangePassword", Icon = "lock_reset" },
                 }
             },

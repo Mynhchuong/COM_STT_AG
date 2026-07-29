@@ -4,6 +4,16 @@
 
     var hour = DateTime.Now.Hour;
     var greeting = hour < 11 ? "Chào buổi sáng" : hour < 14 ? "Chào buổi trưa" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
+
+    var quickLinks = new (string Controller, string Action, string Emoji, string Title, string Gradient)[]
+    {
+        ("Scan",       "Index",          "📷", "Test scan hàng loạt",  "bg-gradient-primary"),
+        ("Production", "Index",          "🏭", "Sản xuất",             "bg-gradient-warning"),
+        ("Qc",         "Index",          "✅", "QC",                   "bg-gradient-success"),
+        ("Report",     "Index",          "📊", "Báo cáo",              "bg-gradient-info"),
+        ("Delivery",   "Index",          "🚚", "Nhân viên giao hàng",  "bg-gradient-secondary"),
+        ("Account",    "ChangePassword", "🔑", "Đổi mật khẩu",         "bg-gradient-danger"),
+    };
 }
 
 <div class="row">
@@ -42,28 +52,19 @@
     <div class="col-12 mb-2">
         <p class="text-secondary text-sm mb-0">Truy cập nhanh</p>
     </div>
-    <div class="col-6 col-md-3 mb-4">
-        <a asp-controller="Scan" asp-action="Index" class="text-decoration-none">
-            <div class="card h-100 quick-tile">
-                <div class="card-body p-3 text-center">
-                    <div class="icon icon-shape icon-md bg-gradient-primary shadow text-center border-radius-lg mx-auto mb-2 d-flex align-items-center justify-content-center">
-                        <i class="material-symbols-rounded text-white" aria-hidden="true">qr_code_scanner</i>
+    @foreach (var link in quickLinks)
+    {
+        <div class="col-6 col-md-3 mb-4">
+            <a asp-controller="@link.Controller" asp-action="@link.Action" class="text-decoration-none">
+                <div class="card h-100 quick-tile">
+                    <div class="card-body p-3 text-center">
+                        <div class="@link.Gradient shadow border-radius-lg mx-auto mb-2 d-flex align-items-center justify-content-center" style="width:64px;height:64px;font-size:2.1rem;line-height:1;" aria-hidden="true">
+                            @link.Emoji
+                        </div>
+                        <p class="text-sm mb-0 text-dark font-weight-bold">@link.Title</p>
                     </div>
-                    <p class="text-sm mb-0 text-dark font-weight-bold">Test scan hàng loạt</p>
                 </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-6 col-md-3 mb-4">
-        <a asp-controller="Account" asp-action="ChangePassword" class="text-decoration-none">
-            <div class="card h-100 quick-tile">
-                <div class="card-body p-3 text-center">
-                    <div class="icon icon-shape icon-md bg-gradient-info shadow text-center border-radius-lg mx-auto mb-2 d-flex align-items-center justify-content-center">
-                        <i class="material-symbols-rounded text-white" aria-hidden="true">lock_reset</i>
-                    </div>
-                    <p class="text-sm mb-0 text-dark font-weight-bold">Đổi mật khẩu</p>
-                </div>
-            </div>
-        </a>
-    </div>
+            </a>
+        </div>
+    }
 </div>

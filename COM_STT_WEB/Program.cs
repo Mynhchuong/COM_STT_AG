@@ -13,6 +13,19 @@ builder.Services.AddHttpClient<AuthApiService>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+builder.Services.AddHttpClient<ProductionApiService>(client =>
+{
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"]
+                  ?? throw new InvalidOperationException("ApiSettings:BaseUrl not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddAntiforgery(options =>
+{
+    // Cho phép JS gửi token qua header khi gọi fetch() từ các trang JSON (VD: Production/Scan)
+    options.HeaderName = "RequestVerificationToken";
+});
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {

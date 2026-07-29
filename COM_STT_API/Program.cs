@@ -13,6 +13,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<AgmesOracleService>();
 
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<InspectionBatchService>();
+builder.Services.AddScoped<ProdPlanService>();
+builder.Services.AddScoped<InspectionHeadService>();
 
 var app = builder.Build();
 
@@ -30,6 +33,8 @@ app.MapGet("/check-db", async (AgmesOracleService agmes) =>
 {
     try
     {
+        await agmes.ExecuteQueryAsync("SELECT 1 FROM DUAL", r => 1);
+        
         await agmes.ExecuteQueryAsync("SELECT 1 FROM DUAL", r => 1);
         return Results.Ok(new { success = true, message = "Kết nối AGMES THÀNH CÔNG!" });
     }

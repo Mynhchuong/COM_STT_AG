@@ -1,0 +1,18 @@
+@model COM_STT_WEB.Models.ComingSoonViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-5 text-center">
+                <div class="icon icon-shape icon-lg @Model.GradientClass shadow text-center border-radius-xl mx-auto mb-3 d-flex align-items-center justify-content-center">
+                    <i class="material-symbols-rounded text-white" style="font-size:1.85rem;" aria-hidden="true">@Model.Icon</i>
+                </div>
+                <h5 class="mb-1">@Model.Title</h5>
+                <p class="text-secondary text-sm mb-0">Đang phát triển — sẽ cập nhật nghiệp vụ sau.</p>
+            </div>
+        </div>
+    </div>
+</div>
