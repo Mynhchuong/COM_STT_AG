@@ -13,6 +13,26 @@ window.PdaHelper = (function () {
 
     return {
         /**
+         * 0. Mở khoá AudioContext bằng 1 cử chỉ chạm THẬT của người dùng — bắt buộc trên
+         *    iOS Safari/webview (Zalo, Messenger...), nếu không các tiếng BEEP gọi sau đó
+         *    (từ callback quét camera, không phải từ 1 cú chạm) sẽ bị trình duyệt tắt tiếng
+         *    âm thầm, không báo lỗi gì. Gọi hàm này ngay trong 1 onclick handler thật.
+         */
+        unlockAudio: function () {
+            try {
+                if (!audioCtx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) audioCtx = new AudioContext();
+                }
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } catch (e) {
+                console.warn('Không mở khoá được AudioContext:', e);
+            }
+        },
+
+        /**
          * 1. Phát tiếng BEEP phản hồi qua Web Audio API (0ms độ trễ)
          * @param {boolean} success - true = BEEP cao trong vắt, false = TÍT TÍT trầm báo lỗi
          */

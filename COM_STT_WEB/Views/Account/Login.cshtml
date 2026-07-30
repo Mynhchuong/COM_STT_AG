@@ -16,6 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
 
     <link id="pagestyle" href="~/assets/css/material-dashboard.min.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
@@ -45,9 +46,23 @@
 
                                     <div class="mb-3">
                                         <label asp-for="EmpCd" class="form-label"></label>
-                                        <input asp-for="EmpCd" class="form-control" autocomplete="username" autofocus />
+                                        <div class="d-flex gap-2">
+                                            <input asp-for="EmpCd" class="form-control" autocomplete="username" autofocus />
+                                            <button type="button" id="btnScanQr" class="btn btn-outline-dark mb-0 px-3 d-flex align-items-center justify-content-center flex-shrink-0" title="Quét QR nhân viên">
+                                                <i class="material-symbols-rounded">qr_code_scanner</i>
+                                            </button>
+                                        </div>
                                         <span asp-validation-for="EmpCd" class="text-danger text-sm"></span>
                                     </div>
+
+                                    <div id="qrScanArea" class="d-none mb-3">
+                                        <div id="qr-reader" class="mx-auto bg-black border-radius-lg overflow-hidden" style="max-width: 100%;"></div>
+                                        <p class="text-xs text-secondary text-center mt-2 mb-1">Quét mã QR trên thẻ nhân viên để tự điền mã nhân viên — vẫn cần nhập mật khẩu để đăng nhập.</p>
+                                        <div class="text-center">
+                                            <button type="button" id="btnCancelScan" class="btn btn-sm btn-outline-danger mb-0">Huỷ quét</button>
+                                        </div>
+                                    </div>
+
                                     <div class="mb-3">
                                         <label asp-for="Password" class="form-label"></label>
                                         <input asp-for="Password" type="password" class="form-control" autocomplete="current-password" />
@@ -77,6 +92,8 @@
     <script src="~/assets/js/core/popper.min.js"></script>
     <script src="~/assets/js/core/bootstrap.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/html5-qrcode/dist/html5-qrcode.min.js" asp-append-version="true"></script>
+    <script src="~/js/pages/login-qr.js" asp-append-version="true"></script>
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 </body>
 </html>

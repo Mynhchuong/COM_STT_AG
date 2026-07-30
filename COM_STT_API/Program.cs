@@ -16,7 +16,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<InspectionBatchService>();
 builder.Services.AddScoped<ProdPlanService>();
 builder.Services.AddScoped<InspectionHeadService>();
-builder.Services.AddScoped<CuttingService>();
+builder.Services.AddScoped<YieldService>();
 
 var app = builder.Build();
 

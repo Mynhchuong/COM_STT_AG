@@ -20,13 +20,6 @@ builder.Services.AddHttpClient<ProductionApiService>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
-builder.Services.AddHttpClient<CuttingApiService>(client =>
-{
-    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"]
-                  ?? throw new InvalidOperationException("ApiSettings:BaseUrl not configured.");
-    client.BaseAddress = new Uri(baseUrl);
-});
-
 builder.Services.AddAntiforgery(options =>
 {
     // Cho phép JS gửi token qua header khi gọi fetch() từ các trang JSON (VD: Production/Scan)
@@ -38,7 +31,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/Login";
+        // false: phiên không "ghi nhớ" phải hết hạn đúng giờ đã định (nửa đêm) bất kể hoạt động,
+        // để ép đăng nhập lại mỗi ngày — xem comment trong AccountController.Login.
         options.SlidingExpiration = false;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.Name = ".AspNetCore.Cookies.ComStt";
     });
 
 var app = builder.Build();
@@ -47,11 +45,10 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthentication();

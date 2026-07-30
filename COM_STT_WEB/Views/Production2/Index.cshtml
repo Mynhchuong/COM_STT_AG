@@ -1,0 +1,108 @@
+@{
+    ViewData["Title"] = "Sản Xuất 2 - Set In & Set Out";
+}
+
+<style>
+    .module-card {
+        border-radius: 20px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 2px solid transparent;
+        cursor: pointer;
+        text-decoration: none !important;
+        color: inherit;
+    }
+    .module-card:hover, .module-card:active {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15) !important;
+    }
+    .module-card-in {
+        background: linear-gradient(195deg, #2dce89, #1aaf6c);
+    }
+    .module-card-out {
+        background: linear-gradient(195deg, #1a73e8, #0d47a1);
+    }
+    .module-card-log {
+        background: linear-gradient(195deg, #495057, #212529);
+    }
+
+    .btn-back-home {
+        min-height: 48px;
+        border-radius: 12px;
+        font-weight: 700;
+    }
+</style>
+
+<!-- HEADER WITH BACK TO HOME BUTTON -->
+<div class="row align-items-center mb-3">
+    <div class="col-12 col-md-6 d-flex align-items-center gap-2 mb-2 mb-md-0">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark btn-back-home mb-0 d-inline-flex align-items-center gap-1 px-3">
+            <i class="material-symbols-rounded" style="font-size:20px;">arrow_back</i>Trang chủ
+        </a>
+        <div class="ms-2">
+            <h5 class="font-weight-bolder text-dark mb-0">Quản lý Sản Xuất (Set In / Set Out)</h5>
+            <p class="text-secondary text-xs mb-0">Chọn chức năng làm việc trên thiết bị cầm tay / PDA</p>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center my-2">
+    <!-- 1. SET IN CARD -->
+    <div class="col-12 col-md-5 mb-4">
+        <a asp-action="SetIn" class="card module-card module-card-in shadow-lg text-white p-4 h-100 d-flex flex-column justify-content-between">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="icon icon-shape bg-white text-success shadow border-radius-xl p-3 d-flex align-items-center justify-content-center">
+                    <i class="material-symbols-rounded" style="font-size:2.2rem;">login</i>
+                </div>
+                <span class="badge bg-white text-success font-weight-bolder px-3 py-2 text-sm">VÀO CHUYỀN</span>
+            </div>
+            <div>
+                <h3 class="text-white font-weight-bolder mb-2">SET IN</h3>
+                <p class="text-white opacity-9 text-sm mb-0">Quét đọc hàng loạt thẻ PCard đầu vào chuyền sản xuất</p>
+            </div>
+            <div class="mt-4 pt-3 border-top border-white border-opacity-25 d-flex align-items-center justify-content-between text-sm font-weight-bold">
+                <span>Vào quét đợt mới →</span>
+                <i class="material-symbols-rounded">arrow_forward</i>
+            </div>
+        </a>
+    </div>
+
+    <!-- 2. SET OUT CARD -->
+    <div class="col-12 col-md-5 mb-4">
+        <a asp-action="SetOut" class="card module-card module-card-out shadow-lg text-white p-4 h-100 d-flex flex-column justify-content-between">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="icon icon-shape bg-white text-info shadow border-radius-xl p-3 d-flex align-items-center justify-content-center">
+                    <i class="material-symbols-rounded" style="font-size:2.2rem;">logout</i>
+                </div>
+                <span class="badge bg-white text-info font-weight-bolder px-3 py-2 text-sm">RA CHUYỀN</span>
+            </div>
+            <div>
+                <h3 class="text-white font-weight-bolder mb-2">SET OUT</h3>
+                <p class="text-white opacity-9 text-sm mb-0">Quét đọc hàng loạt thẻ PCard đầu ra chuyền sản xuất</p>
+            </div>
+            <div class="mt-4 pt-3 border-top border-white border-opacity-25 d-flex align-items-center justify-content-between text-sm font-weight-bold">
+                <span>Vào quét đợt mới →</span>
+                <i class="material-symbols-rounded">arrow_forward</i>
+            </div>
+        </a>
+    </div>
+
+    <!-- 3. XEM LOG CARD -->
+    <div class="col-12 col-md-5 mb-4">
+        <a asp-action="Log" class="card module-card module-card-log shadow-lg text-white p-4 h-100 d-flex flex-column justify-content-between">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="icon icon-shape bg-white text-dark shadow border-radius-xl p-3 d-flex align-items-center justify-content-center">
+                    <i class="material-symbols-rounded" style="font-size:2.2rem;">receipt_long</i>
+                </div>
+                <span class="badge bg-white text-dark font-weight-bolder px-3 py-2 text-sm">HÔM NAY</span>
+            </div>
+            <div>
+                <h3 class="text-white font-weight-bolder mb-2">XEM LOG</h3>
+                <p class="text-white opacity-9 text-sm mb-0">Xem danh sách đã ghi trong ngày, xoá dòng test nếu cần</p>
+            </div>
+            <div class="mt-4 pt-3 border-top border-white border-opacity-25 d-flex align-items-center justify-content-between text-sm font-weight-bold">
+                <span>Xem danh sách →</span>
+                <i class="material-symbols-rounded">arrow_forward</i>
+            </div>
+        </a>
+    </div>
+</div>

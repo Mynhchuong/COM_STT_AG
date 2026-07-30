@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "SET OUT - Sản xuất";
+}
+
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="card bg-gradient-info border-radius-lg text-white">
+            <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon icon-shape bg-white text-info shadow border-radius-md d-flex align-items-center justify-content-center">
+                        <i class="material-symbols-rounded" style="font-size:1.8rem;">logout</i>
+                    </div>
+                    <div>
+                        <h5 class="text-white font-weight-bolder mb-0">SET OUT — Ra Chuyền</h5>
+                        <p class="text-white opacity-8 text-xs mb-0">Quét đọc hàng loạt thẻ PCard đầu ra chuyền</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
+                        <i class="material-symbols-rounded">home</i>Trang chủ
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
+                        <i class="material-symbols-rounded">arrow_back</i>Set In/Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 text-center py-5">
+        <div class="card p-5 border-radius-lg">
+            <i class="material-symbols-rounded text-info text-6xl mb-3">construction</i>
+            <h4 class="font-weight-bolder text-dark mb-2">Chức năng SET OUT đang sẵn sàng</h4>
+            <p class="text-secondary text-sm mb-4">Màn hình Set Out đã được tạo khung sẵn. Vui lòng cho biết quy trình lưu Set Out khi bạn sẵn sàng!</p>
+            <div>
+                <a asp-action="SetIn" class="btn bg-gradient-success px-4 py-3" style="border-radius:12px;">
+                    <i class="material-symbols-rounded me-1">login</i>Chuyển sang SET IN
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

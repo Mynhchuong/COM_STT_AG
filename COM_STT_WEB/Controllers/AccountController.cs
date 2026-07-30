@@ -56,16 +56,18 @@ public class AccountController : Controller
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
 
-        // Chỉ cần đăng nhập 1 lần/ngày: phiên hết hạn đúng nửa đêm hôm nay, không gia hạn theo hoạt động.
-        var expireAtMidnight = DateTimeOffset.Now.Date.AddDays(1);
+        // RememberMe = false -> cookie chỉ tồn tại trong phiên trình duyệt, và bị ép hết hạn lúc
+        //   nửa đêm hôm nay (không gia hạn theo hoạt động) -> bắt đăng nhập lại mỗi ngày.
+        // RememberMe = true  -> cookie tồn tại 30 ngày kể từ lúc đăng nhập, kể cả khi đóng/mở lại
+        //   trình duyệt, không cần đăng nhập lại mỗi ngày trong khoảng thời gian đó.
+        var expiresUtc = model.RememberMe
+            ? DateTimeOffset.UtcNow.AddDays(30)
+            : DateTimeOffset.Now.Date.AddDays(1).ToUniversalTime();
 
-        // RememberMe = false -> cookie chỉ tồn tại trong phiên trình duyệt (mất khi đóng trình duyệt).
-        // RememberMe = true  -> cookie tồn tại lại kể cả khi đóng/mở lại trình duyệt.
-        // Dù chọn kiểu nào, phiên vẫn bị ép hết hạn lúc nửa đêm (ExpiresUtc) để bắt đăng nhập lại mỗi ngày.
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties
         {
             IsPersistent = model.RememberMe,
-            ExpiresUtc = expireAtMidnight.ToUniversalTime(),
+            ExpiresUtc = expiresUtc,
         });
 
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) && IsSafeReturnUrl(returnUrl))

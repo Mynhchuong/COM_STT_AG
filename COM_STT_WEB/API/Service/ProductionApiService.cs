@@ -116,6 +116,29 @@ public class ProductionApiService
         var response = await _httpClient.DeleteAsync($"api/inspection-head/{pcardNo}");
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<bool> SaveYieldBatchAsync(List<KeyinYieldItemModel> items)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/yield/save-batch", items);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<List<KeyinYieldLogItemModel>> GetTodayYieldAsync(string? worker)
+    {
+        var url = "api/yield/today";
+        if (!string.IsNullOrWhiteSpace(worker))
+        {
+            url += $"?worker={Uri.EscapeDataString(worker)}";
+        }
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<KeyinYieldLogItemModel>>>(url);
+        return response?.Data ?? new List<KeyinYieldLogItemModel>();
+    }
+
+    public async Task<bool> DeleteYieldAsync(string dGather)
+    {
+        var response = await _httpClient.DeleteAsync($"api/yield/{Uri.EscapeDataString(dGather)}");
+        return response.IsSuccessStatusCode;
+    }
 }
 
 public class ApiResponse<T>
@@ -162,4 +185,112 @@ public class PcardPlanInfoResponse
 
     [JsonPropertyName("MES_GROUP_SUM")]
     public string? MesGroupSum { get; set; }
+
+    [JsonPropertyName("C_WIDTH")]
+    public string? CWidth { get; set; }
+
+    [JsonPropertyName("C_PO_NUM")]
+    public string? CPoNum { get; set; }
+
+    [JsonPropertyName("STATUS")]
+    public string? Status { get; set; }
+
+    [JsonPropertyName("C_ORD_OP")]
+    public string? COrdOp { get; set; }
+
+    [JsonPropertyName("C_LINE")]
+    public string? CLine { get; set; }
+
+    [JsonPropertyName("F_CLOSE")]
+    public string? FClose { get; set; }
+
+    [JsonPropertyName("Q_PLAN")]
+    public int QPlan { get; set; }
+
+    [JsonPropertyName("Q_GATHER")]
+    public int QGather { get; set; }
+}
+
+public class KeyinYieldItemModel
+{
+    [JsonPropertyName("D_GATHER")]
+    public string? DGather { get; set; }
+
+    [JsonPropertyName("C_ACTION")]
+    public string? CAction { get; set; } = "INPUT";
+
+    [JsonPropertyName("C_KEYINLOC")]
+    public string? CKeyinloc { get; set; } = "SCREEN";
+
+    [JsonPropertyName("C_KEYINPART")]
+    public string? CKeyinpart { get; set; }
+
+    [JsonPropertyName("C_PO_NUM")]
+    public string? CPoNum { get; set; }
+
+    [JsonPropertyName("C_ORD_NO")]
+    public string? COrdNo { get; set; }
+
+    [JsonPropertyName("C_WIDTH")]
+    public string? CWidth { get; set; }
+
+    [JsonPropertyName("C_STYLE")]
+    public string? CStyle { get; set; }
+
+    [JsonPropertyName("C_SIZE")]
+    public string? CSize { get; set; }
+
+    [JsonPropertyName("C_WORK_LINE")]
+    public string? CWorkLine { get; set; }
+
+    [JsonPropertyName("C_WORKER")]
+    public string? CWorker { get; set; }
+
+    [JsonPropertyName("Q_QTY")]
+    public int QQty { get; set; }
+
+    [JsonPropertyName("I_IP_NO")]
+    public string? IIpNo { get; set; }
+}
+
+public class KeyinYieldLogItemModel
+{
+    [JsonPropertyName("D_GATHER")]
+    public string DGather { get; set; } = string.Empty;
+
+    [JsonPropertyName("C_ACTION")]
+    public string? CAction { get; set; }
+
+    [JsonPropertyName("C_KEYINLOC")]
+    public string? CKeyinloc { get; set; }
+
+    [JsonPropertyName("C_KEYINPART")]
+    public string? CKeyinpart { get; set; }
+
+    [JsonPropertyName("C_PO_NUM")]
+    public string? CPoNum { get; set; }
+
+    [JsonPropertyName("C_ORD_NO")]
+    public string? COrdNo { get; set; }
+
+    [JsonPropertyName("C_WIDTH")]
+    public string? CWidth { get; set; }
+
+    [JsonPropertyName("C_STYLE")]
+    public string? CStyle { get; set; }
+
+    [JsonPropertyName("C_SIZE")]
+    public string? CSize { get; set; }
+
+    [JsonPropertyName("C_WORK_LINE")]
+    public string? CWorkLine { get; set; }
+
+    [JsonPropertyName("C_WORKER")]
+    public string? CWorker { get; set; }
+
+    [JsonPropertyName("Q_QTY")]
+    public int QQty { get; set; }
+
+    [JsonPropertyName("I_IP_NO")]
+    public string? IIpNo { get; set; }
 }
