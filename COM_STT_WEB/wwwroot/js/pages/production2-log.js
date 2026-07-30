@@ -3,6 +3,25 @@
         const logListContainer = document.getElementById('logListContainer');
         const logCount = document.getElementById('logCount');
 
+        const logFilterInput   = document.getElementById('logFilterInput');
+        const btnScanFilter    = document.getElementById('btnScanFilter');
+        const btnClearFilter   = document.getElementById('btnClearFilter');
+        const btnCancelFilterScan = document.getElementById('btnCancelFilterScan');
+        const filterScanArea   = document.getElementById('filterScanArea');
+        const filterStatus     = document.getElementById('filterStatus');
+
+        const paginationBar    = document.getElementById('paginationBar');
+        const pageIndicator    = document.getElementById('pageIndicator');
+        const btnPrevPage      = document.getElementById('btnPrevPage');
+        const btnNextPage      = document.getElementById('btnNextPage');
+
+        const PAGE_SIZE = 10;
+        let allItems = [];
+        let filteredItems = [];
+        let currentPage = 1;
+        let html5QrCode = null;
+        let scannerRunning = false;
+
         function getAntiForgeryToken() {
             const el = document.querySelector('input[name="__RequestVerificationToken"]');
             return el ? el.value : '';
@@ -14,18 +33,25 @@
                     <i class="material-symbols-rounded text-secondary text-4xl mb-2">inbox</i>
                     <p class="mb-0">${message}</p>
                 </div>`;
+            paginationBar.classList.add('d-none');
         }
 
-        function renderList(items) {
-            if (!items || items.length === 0) {
-                renderEmpty('Chưa có dòng nào được ghi hôm nay.');
-                logCount.textContent = '0 dòng';
+        function renderPage() {
+            const total = filteredItems.length;
+            logCount.textContent = total + ' dòng' + (allItems.length !== total ? ` (lọc từ ${allItems.length})` : '');
+
+            if (total === 0) {
+                renderEmpty(allItems.length === 0 ? 'Chưa có dòng nào được ghi hôm nay.' : 'Không có dòng nào khớp bộ lọc.');
                 return;
             }
 
-            logCount.textContent = items.length + ' dòng';
+            const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            if (currentPage > totalPages) currentPage = totalPages;
 
-            logListContainer.innerHTML = items.map(function (item) {
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const pageItems = filteredItems.slice(start, start + PAGE_SIZE);
+
+            logListContainer.innerHTML = pageItems.map(function (item) {
                 const isIn = (item.C_ACTION || '').toUpperCase() === 'INPUT';
                 const badgeClass = isIn ? 'badge-action-in' : 'badge-action-out';
                 const actionLabel = isIn ? 'SET IN' : 'SET OUT';
@@ -58,6 +84,28 @@
                     deleteLogItem(btn.dataset.dgather);
                 });
             });
+
+            paginationBar.classList.toggle('d-none', totalPages <= 1);
+            pageIndicator.textContent = `Trang ${currentPage}/${totalPages}`;
+            btnPrevPage.disabled = currentPage <= 1;
+            btnNextPage.disabled = currentPage >= totalPages;
+        }
+
+        function applyFilter() {
+            const term = logFilterInput.value.trim().toLowerCase();
+            btnClearFilter.classList.toggle('d-none', !term);
+
+            if (!term) {
+                filteredItems = allItems;
+            } else {
+                filteredItems = allItems.filter(function (item) {
+                    return [item.C_STYLE, item.C_ORD_NO, item.C_PO_NUM, item.C_KEYINPART, item.C_KEYINLOC, item.C_WORKER]
+                        .some(function (f) { return (f || '').toString().toLowerCase().includes(term); });
+                });
+            }
+
+            currentPage = 1;
+            renderPage();
         }
 
         async function loadLog() {
@@ -66,12 +114,15 @@
                 const res = await fetch('/Production2/GetTodayLog');
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    renderList(data.data);
+                    allItems = data.data || [];
+                    applyFilter();
                 } else {
+                    allItems = [];
                     renderEmpty(data.message || 'Không tải được dữ liệu.');
                 }
             } catch (err) {
                 console.error(err);
+                allItems = [];
                 renderEmpty('Lỗi kết nối máy chủ!');
             }
         }
@@ -86,11 +137,8 @@
                 });
 
                 if (res.ok) {
-                    const el = document.getElementById('log-' + dGather);
-                    if (el) el.remove();
-                    const remaining = logListContainer.querySelectorAll('.log-item').length;
-                    logCount.textContent = remaining + ' dòng';
-                    if (remaining === 0) renderEmpty('Chưa có dòng nào được ghi hôm nay.');
+                    allItems = allItems.filter(function (i) { return i.D_GATHER !== dGather; });
+                    applyFilter();
                 } else {
                     alert('Không thể xoá dòng này, vui lòng thử lại.');
                 }
@@ -99,6 +147,86 @@
                 alert('Lỗi kết nối khi xoá!');
             }
         }
+
+        // --- Lọc bằng gõ tay ---
+        logFilterInput.addEventListener('input', applyFilter);
+        btnClearFilter.addEventListener('click', function () {
+            logFilterInput.value = '';
+            applyFilter();
+        });
+
+        // --- Phân trang ---
+        btnPrevPage.addEventListener('click', function () {
+            if (currentPage > 1) { currentPage--; renderPage(); }
+        });
+        btnNextPage.addEventListener('click', function () {
+            currentPage++; renderPage();
+        });
+
+        // --- Lọc bằng quét PCard: quét xong tra cứu kế hoạch, lọc theo Style + Order của PCard đó ---
+        function stopFilterScanner() {
+            filterScanArea.classList.add('d-none');
+            if (html5QrCode && scannerRunning) {
+                scannerRunning = false;
+                html5QrCode.stop().then(function () { html5QrCode.clear(); }).catch(function () {});
+            }
+        }
+
+        async function onFilterScanSuccess(decodedText) {
+            const cardNo = (decodedText || '').trim().toUpperCase();
+            if (!cardNo) return;
+            stopFilterScanner();
+
+            filterStatus.textContent = `Đang tra cứu PCard ${cardNo}...`;
+            filterStatus.className = 'text-xs text-secondary mt-2';
+
+            try {
+                const res = await fetch('/Production2/GetPcardInfo?cardNo=' + encodeURIComponent(cardNo));
+                const data = await res.json();
+
+                if (res.ok && data.success && data.data) {
+                    const ordNo = data.data.I_PO_NO || data.data.iPoNo || '';
+                    logFilterInput.value = ordNo || cardNo;
+                    applyFilter();
+                    filterStatus.textContent = `Đã lọc theo Order ${ordNo} (từ PCard ${cardNo}).`;
+                    filterStatus.className = 'text-xs text-success font-weight-bold mt-2';
+                } else {
+                    logFilterInput.value = cardNo;
+                    applyFilter();
+                    filterStatus.textContent = `Không tìm thấy kế hoạch cho PCard ${cardNo} — lọc trực tiếp theo mã đã quét.`;
+                    filterStatus.className = 'text-xs text-danger mt-2';
+                }
+            } catch (err) {
+                console.error(err);
+                filterStatus.textContent = 'Lỗi kết nối khi tra cứu PCard!';
+                filterStatus.className = 'text-xs text-danger mt-2';
+            }
+        }
+
+        function onFilterScanFailure() {
+            // bỏ qua khung hình không đọc được mã
+        }
+
+        btnScanFilter.addEventListener('click', function () {
+            filterScanArea.classList.remove('d-none');
+            html5QrCode = new Html5Qrcode('filterScanReader');
+            html5QrCode.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 240, height: 240 } },
+                onFilterScanSuccess,
+                onFilterScanFailure
+            ).then(function () {
+                scannerRunning = true;
+            }).catch(function (err) {
+                const detail = (err && err.message) ? err.message : String(err);
+                filterStatus.textContent = 'Không mở được camera: ' + detail;
+                filterStatus.className = 'text-xs text-danger mt-2';
+                filterScanArea.classList.add('d-none');
+            });
+        });
+
+        btnCancelFilterScan.addEventListener('click', stopFilterScanner);
+        window.addEventListener('beforeunload', stopFilterScanner);
 
         loadLog();
     });

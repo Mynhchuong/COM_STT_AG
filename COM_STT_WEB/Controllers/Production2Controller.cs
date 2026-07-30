@@ -127,6 +127,27 @@ public class Production2Controller : Controller
         return Ok(new { success = true });
     }
 
+    // ============================================================
+    // 4. QUẢN LÝ SET IN/OUT — bảng pivot số lượng theo size, tra theo C_ORD_NO (chạy trên desktop)
+    // ============================================================
+    [HttpGet]
+    public IActionResult Manage()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetSizePivot([FromQuery] string ordNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo))
+        {
+            return BadRequest(new { success = false, message = "Vui lòng nhập số Order." });
+        }
+
+        var rows = await _apiService.GetSizePivotByOrderAsync(ordNo.Trim());
+        return Ok(new { success = true, data = rows });
+    }
+
     private static string? Truncate(string? value, int maxLength)
     {
         if (string.IsNullOrEmpty(value)) return value;

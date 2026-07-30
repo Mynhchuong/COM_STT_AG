@@ -24,6 +24,9 @@
     .module-card-log {
         background: linear-gradient(195deg, #495057, #212529);
     }
+    .module-card-manage {
+        background: linear-gradient(195deg, #f5365c, #b21f3e);
+    }
 
     .btn-back-home {
         min-height: 48px;
@@ -40,7 +43,6 @@
         </a>
         <div class="ms-2">
             <h5 class="font-weight-bolder text-dark mb-0">Quản lý Sản Xuất (Set In / Set Out)</h5>
-            <p class="text-secondary text-xs mb-0">Chọn chức năng làm việc trên thiết bị cầm tay / PDA</p>
         </div>
     </div>
 </div>
@@ -57,7 +59,6 @@
             </div>
             <div>
                 <h3 class="text-white font-weight-bolder mb-2">SET IN</h3>
-                <p class="text-white opacity-9 text-sm mb-0">Quét đọc hàng loạt thẻ PCard đầu vào chuyền sản xuất</p>
             </div>
             <div class="mt-4 pt-3 border-top border-white border-opacity-25 d-flex align-items-center justify-content-between text-sm font-weight-bold">
                 <span>Vào quét đợt mới →</span>
@@ -101,6 +102,26 @@
             </div>
             <div class="mt-4 pt-3 border-top border-white border-opacity-25 d-flex align-items-center justify-content-between text-sm font-weight-bold">
                 <span>Xem danh sách →</span>
+                <i class="material-symbols-rounded">arrow_forward</i>
+            </div>
+        </a>
+    </div>
+
+    <!-- 4. QUẢN LÝ SET IN/OUT CARD -->
+    <div class="col-12 col-md-5 mb-4">
+        <a asp-action="Manage" class="card module-card module-card-manage shadow-lg text-white p-4 h-100 d-flex flex-column justify-content-between">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="icon icon-shape bg-white text-danger shadow border-radius-xl p-3 d-flex align-items-center justify-content-center">
+                    <i class="material-symbols-rounded" style="font-size:2.2rem;">manage_search</i>
+                </div>
+                <span class="badge bg-white text-danger font-weight-bolder px-3 py-2 text-sm">QUẢN LÝ</span>
+            </div>
+            <div>
+                <h3 class="text-white font-weight-bolder mb-2">QUẢN LÝ SET IN/OUT</h3>
+                <p class="text-white opacity-9 text-sm mb-0">Đang phát triển — sẽ cập nhật nghiệp vụ sau</p>
+            </div>
+            <div class="mt-4 pt-3 border-top border-white border-opacity-25 d-flex align-items-center justify-content-between text-sm font-weight-bold">
+                <span>Vào xem →</span>
                 <i class="material-symbols-rounded">arrow_forward</i>
             </div>
         </a>

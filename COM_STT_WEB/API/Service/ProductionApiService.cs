@@ -139,6 +139,13 @@ public class ProductionApiService
         var response = await _httpClient.DeleteAsync($"api/yield/{Uri.EscapeDataString(dGather)}");
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<List<KeyinYieldSizePivotRowModel>> GetSizePivotByOrderAsync(string ordNo)
+    {
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<KeyinYieldSizePivotRowModel>>>(
+            $"api/yield/size-pivot?ordNo={Uri.EscapeDataString(ordNo)}");
+        return response?.Data ?? new List<KeyinYieldSizePivotRowModel>();
+    }
 }
 
 public class ApiResponse<T>
@@ -293,4 +300,28 @@ public class KeyinYieldLogItemModel
 
     [JsonPropertyName("I_IP_NO")]
     public string? IIpNo { get; set; }
+}
+
+public class KeyinYieldSizePivotRowModel
+{
+    [JsonPropertyName("C_PO_NUM")]
+    public string? CPoNum { get; set; }
+
+    [JsonPropertyName("C_ORD_NO")]
+    public string? COrdNo { get; set; }
+
+    [JsonPropertyName("C_STYLE")]
+    public string? CStyle { get; set; }
+
+    [JsonPropertyName("C_WIDTH")]
+    public string? CWidth { get; set; }
+
+    [JsonPropertyName("C_ACTION")]
+    public string? CAction { get; set; }
+
+    [JsonPropertyName("C_KEYINLOC")]
+    public string? CKeyinLoc { get; set; }
+
+    [JsonPropertyName("SIZES")]
+    public Dictionary<string, int> Sizes { get; set; } = new();
 }

@@ -65,4 +65,23 @@ public class YieldController : ControllerBase
             return StatusCode(500, new { success = false, message = ex.Message });
         }
     }
+
+    [HttpGet("size-pivot")]
+    public async Task<IActionResult> GetSizePivot([FromQuery] string ordNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số ordNo" });
+        }
+
+        try
+        {
+            var rows = await _yieldService.GetSizePivotByOrderAsync(ordNo.Trim());
+            return Ok(new { success = true, total = rows.Count, data = rows });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
 }

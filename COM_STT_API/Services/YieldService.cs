@@ -87,6 +87,55 @@ public class YieldService
         return rowsAffected > 0;
     }
 
+    // Danh sách 44 mã size cố định (01M..22T) — khớp đúng các cột SIZE_xx trong view V_KEYIN_YIELD_SIZE_PIVOT.
+    public static readonly IReadOnlyList<string> SizeCodes = BuildSizeCodes();
+
+    private static List<string> BuildSizeCodes()
+    {
+        var list = new List<string>();
+        for (int i = 1; i <= 22; i++)
+        {
+            var n = i.ToString("00");
+            list.Add(n + "M");
+            list.Add(n + "T");
+        }
+        return list;
+    }
+
+    public async Task<List<KeyinYieldSizePivotRow>> GetSizePivotByOrderAsync(string ordNo)
+    {
+        var sizeCols = string.Join(", ", SizeCodes.Select(s => "SIZE_" + s));
+        var sql = $@"
+            SELECT C_PO_NUM, C_ORD_NO, C_STYLE, C_WIDTH, C_ACTION, C_KEYINLOC, {sizeCols}
+            FROM MES.V_KEYIN_YIELD_SIZE_PIVOT
+            WHERE C_ORD_NO = :ordNo
+            ORDER BY C_STYLE, C_WIDTH, DECODE(C_ACTION, 'INPUT', 1, 'OUTPUT', 2, 'BALANCE', 3, 4)";
+
+        return await _db.ExecuteQueryAsync(sql, MapSizePivotRow, new OracleParameter("ordNo", ordNo));
+    }
+
+    private static KeyinYieldSizePivotRow MapSizePivotRow(OracleDataReader r)
+    {
+        var row = new KeyinYieldSizePivotRow
+        {
+            CPoNum = r["C_PO_NUM"] as string,
+            COrdNo = r["C_ORD_NO"] as string,
+            CStyle = r["C_STYLE"] as string,
+            CWidth = r["C_WIDTH"] as string,
+            CAction = r["C_ACTION"] as string,
+            CKeyinLoc = r["C_KEYINLOC"] as string
+        };
+
+        foreach (var size in SizeCodes)
+        {
+            var col = "SIZE_" + size;
+            var val = r[col];
+            row.Sizes[size] = val == DBNull.Value ? 0 : Convert.ToInt32(val);
+        }
+
+        return row;
+    }
+
     private static KeyinYieldLogItem MapRow(OracleDataReader r) => new()
     {
         DGather = r["D_GATHER"] as string ?? string.Empty,
