@@ -39,7 +39,7 @@ public class YieldService
             {
                 new("dGather",   itemTime),
                 new("cAction",   item.CAction ?? "INPUT"),
-                new("cKeyinloc", item.CKeyinloc ?? "SCREEN"),
+                new("cKeyinloc", item.CKeyinloc ?? "SET"),
                 new("cKeyinpart",item.CKeyinpart ?? "N/A"),
                 new("cPoNum",    item.CPoNum ?? string.Empty),
                 new("cOrdNo",    item.COrdNo ?? item.CPoNum ?? string.Empty),
@@ -53,10 +53,34 @@ public class YieldService
             };
 
             var affected = await _db.ExecuteNonQueryAsync(sql, parameters);
-            if (affected > 0) count++;
+            if (affected > 0)
+            {
+                count++;
+                await InsertPartYieldAsync(item);
+            }
         }
 
         return count;
+    }
+
+    // Ghi thêm vào TRTB_M_KEYIN_PART_YIELD (nổ theo routing/part cho công đoạn CUT_2) mỗi khi
+    // lưu 1 dòng vào TRTB_M_KEYIN_YIELD. D_GATHER ở bảng này chỉ có độ chính xác theo NGÀY nên
+    // quét lại cùng Order/Style/Size trong cùng ngày sẽ đụng unique constraint — bỏ qua vì đó là
+    // hành vi mong đợi (không phải lỗi thật), không chặn việc lưu KEYIN_YIELD chính.
+    private async Task InsertPartYieldAsync(KeyinYieldItemDto item)
+    {
+        try
+        {
+            await _db.ExecuteProcedureAsync("MES.SP_INSERT_KEYIN_PART_YIELD",
+                new OracleParameter("p_i_po_no", item.COrdNo ?? string.Empty),
+                new OracleParameter("p_c_size", item.CSize ?? string.Empty),
+                new OracleParameter("p_c_style", item.CStyle ?? string.Empty),
+                new OracleParameter("p_q_qty", item.QQty));
+        }
+        catch (OracleException ex) when (ex.Number == 1)
+        {
+            // Đã có dữ liệu part-yield cho Order/Style/Size này hôm nay — bỏ qua.
+        }
     }
 
     public async Task<List<KeyinYieldLogItem>> GetTodayAsync(string? worker)

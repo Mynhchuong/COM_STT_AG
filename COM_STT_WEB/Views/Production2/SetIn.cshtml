@@ -536,7 +536,7 @@
             // Map danh sách scannedList sang định dạng DTO TRTB_M_KEYIN_YIELD
             const payload = scannedList.map(item => ({
                 C_ACTION:    'INPUT',
-                C_KEYINLOC:  'SCREEN',
+                C_KEYINLOC:  'SET',
                 C_KEYINPART: item.partsName || 'VAMP',
                 C_PO_NUM:    item.poNum || '',
                 C_ORD_NO:    item.order || '',
