@@ -179,6 +179,32 @@ public class Production2Controller : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkPartDone([FromQuery] string ordNo, [FromQuery] string size, [FromQuery] string partsNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo) || string.IsNullOrWhiteSpace(size) || string.IsNullOrWhiteSpace(partsNo))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số." });
+        }
+
+        var result = await _apiService.MarkPartYieldDoneAsync(ordNo.Trim(), size.Trim(), partsNo.Trim());
+        return Ok(new { success = result.Success, message = result.Message });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdatePartQty([FromQuery] string ordNo, [FromQuery] string size, [FromQuery] string partsNo, [FromQuery] int qty)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo) || string.IsNullOrWhiteSpace(size) || string.IsNullOrWhiteSpace(partsNo))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số." });
+        }
+
+        var result = await _apiService.UpdatePartYieldQtyAsync(ordNo.Trim(), size.Trim(), partsNo.Trim(), qty);
+        return Ok(new { success = result.Success, message = result.Message });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CompleteOrder([FromQuery] string ordNo)
     {
         if (string.IsNullOrWhiteSpace(ordNo))

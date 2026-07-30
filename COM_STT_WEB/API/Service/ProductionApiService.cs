@@ -143,6 +143,22 @@ public class ProductionApiService
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<PartYieldUpdateResult> MarkPartYieldDoneAsync(string ordNo, string size, string partsNo)
+    {
+        var url = $"api/yield/part-mark-done?ordNo={Uri.EscapeDataString(ordNo)}&size={Uri.EscapeDataString(size)}&partsNo={Uri.EscapeDataString(partsNo)}";
+        var response = await _httpClient.PostAsync(url, null);
+        var body = await response.Content.ReadFromJsonAsync<PartYieldUpdateApiResponse>();
+        return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
+    }
+
+    public async Task<PartYieldUpdateResult> UpdatePartYieldQtyAsync(string ordNo, string size, string partsNo, int qty)
+    {
+        var url = $"api/yield/part-update-qty?ordNo={Uri.EscapeDataString(ordNo)}&size={Uri.EscapeDataString(size)}&partsNo={Uri.EscapeDataString(partsNo)}&qty={qty}";
+        var response = await _httpClient.PostAsync(url, null);
+        var body = await response.Content.ReadFromJsonAsync<PartYieldUpdateApiResponse>();
+        return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
+    }
+
     public async Task<List<KeyinYieldLogItemModel>> GetTodayYieldAsync(string? worker)
     {
         var url = "api/yield/today";
@@ -365,6 +381,21 @@ public class SaveYieldBatchResult
 {
     public bool Success { get; set; }
     public int Count { get; set; }
+    public string? Message { get; set; }
+}
+
+public class PartYieldUpdateApiResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+}
+
+public class PartYieldUpdateResult
+{
+    public bool Success { get; set; }
     public string? Message { get; set; }
 }
 

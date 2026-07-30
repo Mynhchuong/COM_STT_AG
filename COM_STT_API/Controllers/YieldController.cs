@@ -110,6 +110,44 @@ public class YieldController : ControllerBase
         }
     }
 
+    [HttpPost("part-mark-done")]
+    public async Task<IActionResult> MarkPartDone([FromQuery] string ordNo, [FromQuery] string size, [FromQuery] string partsNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo) || string.IsNullOrWhiteSpace(size) || string.IsNullOrWhiteSpace(partsNo))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số ordNo/size/partsNo" });
+        }
+
+        try
+        {
+            var (success, message) = await _yieldService.MarkPartYieldDoneAsync(ordNo, size, partsNo);
+            return Ok(new { success, message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost("part-update-qty")]
+    public async Task<IActionResult> UpdatePartQty([FromQuery] string ordNo, [FromQuery] string size, [FromQuery] string partsNo, [FromQuery] int qty)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo) || string.IsNullOrWhiteSpace(size) || string.IsNullOrWhiteSpace(partsNo))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số ordNo/size/partsNo" });
+        }
+
+        try
+        {
+            var (success, message) = await _yieldService.UpdatePartYieldQtyAsync(ordNo, size, partsNo, qty);
+            return Ok(new { success, message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
     [HttpGet("part-status")]
     public async Task<IActionResult> GetPartStatus([FromQuery] string ordNo)
     {

@@ -198,14 +198,85 @@ public class YieldService
     }
 
     // Đánh dấu hoàn tất Set In cho cả Order — không bắt buộc CÒN LẠI = 0, người dùng tự quyết định.
+    // Chỉ đánh dấu hoàn tất cho từng SIZE (CUT_2) đã xong hết (không còn dòng nào IS_DONE khác 'Y') —
+    // không đánh dấu tràn lan cả Order như trước, tránh chốt nhầm size chưa xử lý xong.
     public async Task<int> CompleteOrderAsync(string ordNo)
     {
         const string sql = @"
-            UPDATE MES.TRTB_M_KEYIN_PART_YIELD
-            SET IS_COMPLETE = 'Y', DATE_COMPLETE = SYSDATE
-            WHERE I_PO_NO = :ordNo";
+            UPDATE MES.TRTB_M_KEYIN_PART_YIELD A
+            SET
+                A.IS_COMPLETE       = 'Y',
+                A.DATE_COMPLETE     = SYSDATE
+            WHERE
+                A.I_PO_NO           = :ordNo
+                AND A.C_KEYINLOC    = 'CUT_2'
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM MES.TRTB_M_KEYIN_PART_YIELD B
+                    WHERE B.I_PO_NO = A.I_PO_NO
+                      AND B.C_SIZE = A.C_SIZE
+                      AND B.C_KEYINLOC = A.C_KEYINLOC
+                      AND NVL(B.IS_DONE,'N') <> 'Y')";
 
         return await _db.ExecuteNonQueryAsync(sql, new OracleParameter("ordNo", ordNo));
+    }
+
+    // Bấm 1 lần (chưa xử lý lần nào) trên ô ĐÃ QUÉT — nhận đủ theo kế hoạch.
+    public async Task<(bool Success, string? Message)> MarkPartYieldDoneAsync(string ordNo, string size, string partsNo)
+    {
+        const string sql = @"
+            UPDATE MES.TRTB_M_KEYIN_PART_YIELD
+            SET Q_QTY = Q_PLAN, IS_DONE = 'Y', DATE_DONE = SYSDATE
+            WHERE I_PO_NO = :ordNo AND C_SIZE = :sizeVal AND I_PARTS_NO = :partsNo AND C_KEYINLOC = 'CUT_2'";
+
+        var rows = await _db.ExecuteNonQueryAsync(sql,
+            new OracleParameter("ordNo", ordNo),
+            new OracleParameter("sizeVal", size),
+            new OracleParameter("partsNo", partsNo));
+
+        return rows > 0 ? (true, null) : (false, "Không tìm thấy dòng dữ liệu để cập nhật.");
+    }
+
+    // Bấm lần thứ 2 trở đi (đã xử lý rồi, muốn sửa) — nhập tay số lượng thực nhận, không được vượt kế hoạch.
+    public async Task<(bool Success, string? Message)> UpdatePartYieldQtyAsync(string ordNo, string size, string partsNo, int qty)
+    {
+        if (qty < 0)
+        {
+            return (false, "Số lượng không hợp lệ.");
+        }
+
+        const string planSql = @"
+            SELECT NVL(MAX(Q_PLAN), 0) AS Q_PLAN
+            FROM MES.TRTB_M_KEYIN_PART_YIELD
+            WHERE I_PO_NO = :ordNo AND C_SIZE = :sizeVal AND I_PARTS_NO = :partsNo AND C_KEYINLOC = 'CUT_2'";
+
+        var planResults = await _db.ExecuteQueryAsync(planSql, r => Convert.ToInt32(r["Q_PLAN"]),
+            new OracleParameter("ordNo", ordNo),
+            new OracleParameter("sizeVal", size),
+            new OracleParameter("partsNo", partsNo));
+        var plan = planResults.FirstOrDefault();
+
+        if (plan <= 0)
+        {
+            return (false, "Không tìm thấy kế hoạch cho part/size này.");
+        }
+        if (qty > plan)
+        {
+            return (false, $"Số lượng ({qty}) không được lớn hơn kế hoạch ({plan}).");
+        }
+
+        const string sql = @"
+            UPDATE MES.TRTB_M_KEYIN_PART_YIELD
+            SET Q_QTY = :qty, IS_DONE = 'N', DATE_DONE = NULL
+            WHERE I_PO_NO = :ordNo AND C_SIZE = :sizeVal AND I_PARTS_NO = :partsNo AND C_KEYINLOC = 'CUT_2'";
+
+        var rows = await _db.ExecuteNonQueryAsync(sql,
+            new OracleParameter("qty", qty),
+            new OracleParameter("ordNo", ordNo),
+            new OracleParameter("sizeVal", size),
+            new OracleParameter("partsNo", partsNo));
+
+        return rows > 0 ? (true, null) : (false, "Không tìm thấy dòng dữ liệu để cập nhật.");
     }
 
     public async Task<List<KeyinPartYieldStatusRow>> GetPartYieldStatusByOrderAsync(string ordNo)

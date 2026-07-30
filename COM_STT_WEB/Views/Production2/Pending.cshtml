@@ -27,19 +27,52 @@
         border-collapse: separate;
         border-spacing: 0;
         white-space: nowrap;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
     }
 
     #pivotTable th,
     #pivotTable td {
-        padding: 0.65rem 0.6rem;
+        padding: 0.4rem 0.45rem;
         border-bottom: 1px solid #e9ecef;
         border-right: 1px solid #f1f3f5;
         text-align: right;
-        min-width: 52px;
+        min-width: 46px;
     }
     #pivotTable td.size-col-zero {
         color: #adb5bd;
+    }
+
+    /* Ô ĐÃ QUÉT nhập tay được — làm nút bấm dễ thao tác trên tablet nhưng không quá to. */
+    #pivotTable td.qty-cell {
+        padding: 0.2rem;
+    }
+    #pivotTable .qty-btn {
+        display: block;
+        width: 100%;
+        min-height: 36px;
+        min-width: 36px;
+        border-radius: 6px;
+        border: 2px dashed #cbd5e1;
+        background: #f8f9fa;
+        color: #adb5bd;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+    }
+    #pivotTable .qty-btn:active {
+        transform: scale(0.94);
+    }
+    #pivotTable .qty-btn.has-value {
+        border: 2px solid #2dce89;
+        background: rgba(45, 206, 137, 0.12);
+        color: #2dce89;
+    }
+    #pivotTable .qty-btn:disabled {
+        border: 2px solid transparent;
+        background: transparent;
+        color: #dee2e6;
+        cursor: default;
     }
 
     #pivotTable thead th {
@@ -73,7 +106,9 @@
     #pivotTable thead th.meta-col,
     #pivotTable thead th.total-col {
         z-index: 4;
-        background: #344767;
+        background-color: #344767 !important;
+        background-clip: padding-box;
+        opacity: 1;
     }
 
     #pivotTable .col-part-no    { left: 0px;   width: 90px;  min-width: 90px;  max-width: 90px; }
@@ -90,10 +125,96 @@
     #pivotTable tr.row-remain td.zero { color: #2dce89; font-weight: 800; }
     #pivotTable tr.row-remain td.nonzero { color: #f5365c; }
 
+    /* Ô dính (meta-col/total-col) PHẢI có màu nền ĐẶC, rõ ràng, cùng 1 màu cho mọi dòng —
+       KHÔNG dùng rgba (bán trong suốt) vì cột sticky sẽ bị lộ nội dung cuộn bên dưới khi
+       cuộn ngang. Trạng thái ĐÃ QUÉT/CÒN LẠI đã có màu CHỮ xanh/đỏ riêng để phân biệt rồi,
+       nền cột dính chỉ cần 1 màu đậm, đặc, đồng nhất để tách bạch hẳn với vùng số liệu cuộn. */
+    #pivotTable tr td.meta-col,
+    #pivotTable tr td.total-col {
+        background-color: #d7deea !important;
+    }
+
     #pivotTable td.total-col,
     #pivotTable th.total-col {
         border-right: 2px solid #344767;
         font-weight: 800;
+    }
+
+    /* Popup bàn phím số nhập tay khi bấm ô ĐÃ QUÉT đã có giá trị (sửa số lượng thực nhận) */
+    #numpadOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 1050;
+        align-items: center;
+        justify-content: center;
+    }
+    #numpadOverlay.show {
+        display: flex;
+    }
+    .numpad-box {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.25rem;
+        width: 320px;
+        max-width: 92vw;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    }
+    .numpad-box .numpad-title {
+        font-weight: 700;
+        color: #344767;
+        font-size: 1.05rem;
+    }
+    .numpad-box .numpad-plan {
+        font-size: 0.85rem;
+        color: #8898aa;
+    }
+    .numpad-display {
+        text-align: center;
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #344767;
+        padding: 0.5rem 0;
+        margin: 0.75rem 0;
+        border-bottom: 2px solid #e9ecef;
+        min-height: 3.2rem;
+    }
+    .numpad-error {
+        color: #f5365c;
+        font-size: 0.85rem;
+        text-align: center;
+        min-height: 1.2rem;
+        margin-bottom: 0.25rem;
+    }
+    .numpad-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+    .numpad-grid button {
+        min-height: 56px;
+        font-size: 1.3rem;
+        font-weight: 700;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        background: #f8f9fa;
+        color: #344767;
+    }
+    .numpad-grid button:active {
+        background: #e9ecef;
+    }
+    .numpad-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+    .numpad-actions button {
+        flex: 1;
+        min-height: 48px;
+        font-weight: 700;
+        border-radius: 10px;
+        border: none;
     }
 </style>
 
@@ -151,6 +272,33 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div id="numpadOverlay">
+    <div class="numpad-box">
+        <div class="numpad-title" id="numpadTitle">Part - Size</div>
+        <div class="numpad-plan" id="numpadPlan">Kế hoạch: 0</div>
+        <div class="numpad-display" id="numpadDisplay">0</div>
+        <div class="numpad-error" id="numpadError"></div>
+        <div class="numpad-grid">
+            <button type="button" data-digit="1">1</button>
+            <button type="button" data-digit="2">2</button>
+            <button type="button" data-digit="3">3</button>
+            <button type="button" data-digit="4">4</button>
+            <button type="button" data-digit="5">5</button>
+            <button type="button" data-digit="6">6</button>
+            <button type="button" data-digit="7">7</button>
+            <button type="button" data-digit="8">8</button>
+            <button type="button" data-digit="9">9</button>
+            <button type="button" id="numpadClear">C</button>
+            <button type="button" data-digit="0">0</button>
+            <button type="button" id="numpadBackspace">⌫</button>
+        </div>
+        <div class="numpad-actions">
+            <button type="button" id="numpadCancel" class="btn bg-gradient-secondary mb-0">Huỷ</button>
+            <button type="button" id="numpadSave" class="btn bg-gradient-success mb-0">Lưu</button>
         </div>
     </div>
 </div>
