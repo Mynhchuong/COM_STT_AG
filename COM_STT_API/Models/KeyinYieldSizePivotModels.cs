@@ -26,3 +26,25 @@ public class KeyinYieldSizePivotRow
     [JsonPropertyName("SIZES")]
     public Dictionary<string, int> Sizes { get; set; } = new();
 }
+
+public class KeyinPartYieldStatusRow
+{
+    [JsonPropertyName("I_PO_NO")]
+    public string? IPoNo { get; set; }
+
+    [JsonPropertyName("C_STYLE")]
+    public string? CStyle { get; set; }
+
+    // "1"=TOTAL (kế hoạch), "2"=DONE (đã quét), "3"=REMAIN (còn lại = kế hoạch - đã quét)
+    [JsonPropertyName("ROW_TYPE")]
+    public string? RowType { get; set; }
+
+    [JsonPropertyName("I_PARTS_NO")]
+    public string? IPartsNo { get; set; }
+
+    [JsonPropertyName("N_PARTS_NO")]
+    public string? NPartsNo { get; set; }
+
+    [JsonPropertyName("SIZES")]
+    public Dictionary<string, int> Sizes { get; set; } = new();
+}

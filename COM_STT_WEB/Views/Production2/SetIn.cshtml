@@ -428,6 +428,7 @@
                         partsName: plan.C_PARTS || plan.cParts || 'VAMP',
                         width:     plan.C_WIDTH || plan.cWidth || null,
                         qty:       plan.Q_QTY || plan.qQty || 0,
+                        qPlan:     plan.Q_PLAN || plan.qPlan || 0,
                         groupSum:  plan.MES_GROUP_SUM || plan.mesGroupSum || ''
                     };
 
@@ -543,7 +544,8 @@
                 C_WIDTH:     item.width || null,
                 C_STYLE:     item.style || '',
                 C_SIZE:      item.size || '',
-                Q_QTY:       item.qty || 0
+                Q_QTY:       item.qty || 0,
+                Q_PLAN:      item.qPlan || 0
             }));
 
             try {
@@ -560,13 +562,21 @@
 
                 if (res.ok && data.success) {
                     const count = data.count || scannedList.length;
+                    const ordNo = data.ordNo;
 
                     // Xóa sạch danh sách sau khi lưu thành công để sẵn sàng đợt tiếp
                     scannedList.length = 0;
                     renderScannedList();
                     updateCounters();
 
-                    showScanStatus(true, `✓ Lưu thành công ${count} thẻ PCard vào TRTB_M_KEYIN_YIELD!`);
+                    showScanStatus(true, `✓ Lưu thành công ${count} thẻ PCard vào TRTB_M_KEYIN_YIELD! Đang chuyển sang trang Chờ Set In...`);
+
+                    // Chuyển sang trang "Chờ Set In" để xem trạng thái kế hoạch/đã quét/còn lại của Order vừa lưu
+                    if (ordNo) {
+                        setTimeout(function () {
+                            window.location.href = '/Production2/Pending?ordNo=' + encodeURIComponent(ordNo);
+                        }, 1200);
+                    }
                 } else {
                     showScanStatus(false, data.message || 'Lỗi khi lưu dữ liệu vào cơ sở dữ liệu!');
                 }

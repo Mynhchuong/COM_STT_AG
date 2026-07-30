@@ -117,9 +117,29 @@ public class ProductionApiService
         return response.IsSuccessStatusCode;
     }
 
-    public async Task<bool> SaveYieldBatchAsync(List<KeyinYieldItemModel> items)
+    public async Task<SaveYieldBatchResult> SaveYieldBatchAsync(List<KeyinYieldItemModel> items)
     {
         var response = await _httpClient.PostAsJsonAsync("api/yield/save-batch", items);
+        var body = await response.Content.ReadFromJsonAsync<SaveYieldBatchApiResponse>();
+
+        return new SaveYieldBatchResult
+        {
+            Success = response.IsSuccessStatusCode && (body?.Success ?? false),
+            Count = body?.SavedCount ?? 0,
+            Message = body?.Message
+        };
+    }
+
+    public async Task<List<KeyinPartYieldStatusRowModel>> GetPartYieldStatusByOrderAsync(string ordNo)
+    {
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<KeyinPartYieldStatusRowModel>>>(
+            $"api/yield/part-status?ordNo={Uri.EscapeDataString(ordNo)}");
+        return response?.Data ?? new List<KeyinPartYieldStatusRowModel>();
+    }
+
+    public async Task<bool> CompleteOrderAsync(string ordNo)
+    {
+        var response = await _httpClient.PostAsync($"api/yield/complete-order?ordNo={Uri.EscapeDataString(ordNo)}", null);
         return response.IsSuccessStatusCode;
     }
 
@@ -256,6 +276,9 @@ public class KeyinYieldItemModel
     [JsonPropertyName("Q_QTY")]
     public int QQty { get; set; }
 
+    [JsonPropertyName("Q_PLAN")]
+    public int QPlan { get; set; }
+
     [JsonPropertyName("I_IP_NO")]
     public string? IIpNo { get; set; }
 }
@@ -321,6 +344,46 @@ public class KeyinYieldSizePivotRowModel
 
     [JsonPropertyName("C_KEYINLOC")]
     public string? CKeyinLoc { get; set; }
+
+    [JsonPropertyName("SIZES")]
+    public Dictionary<string, int> Sizes { get; set; } = new();
+}
+
+public class SaveYieldBatchApiResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("savedCount")]
+    public int SavedCount { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+}
+
+public class SaveYieldBatchResult
+{
+    public bool Success { get; set; }
+    public int Count { get; set; }
+    public string? Message { get; set; }
+}
+
+public class KeyinPartYieldStatusRowModel
+{
+    [JsonPropertyName("I_PO_NO")]
+    public string? IPoNo { get; set; }
+
+    [JsonPropertyName("C_STYLE")]
+    public string? CStyle { get; set; }
+
+    [JsonPropertyName("ROW_TYPE")]
+    public string? RowType { get; set; }
+
+    [JsonPropertyName("I_PARTS_NO")]
+    public string? IPartsNo { get; set; }
+
+    [JsonPropertyName("N_PARTS_NO")]
+    public string? NPartsNo { get; set; }
 
     [JsonPropertyName("SIZES")]
     public Dictionary<string, int> Sizes { get; set; } = new();

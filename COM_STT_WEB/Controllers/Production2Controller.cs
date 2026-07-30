@@ -74,6 +74,13 @@ public class Production2Controller : Controller
             return BadRequest(new { success = false, message = "Danh sách thẻ quét rỗng." });
         }
 
+        // Nhân viên chắc chắn quét cùng 1 PO trong 1 lượt Set In — chặn sớm nếu lẫn PO khác nhau.
+        var distinctOrders = items.Select(i => i.COrdNo ?? string.Empty).Distinct().ToList();
+        if (distinctOrders.Count > 1)
+        {
+            return BadRequest(new { success = false, message = "Tất cả thẻ trong 1 lượt lưu phải cùng 1 Order (PO)." });
+        }
+
         var user = COM_STT_WEB.Helpers.AuthHelper.GetCurrentUser(User);
         var empCd = user?.EmpCd ?? "N/A";
         var lineCd = user?.LineCd;
@@ -88,13 +95,13 @@ public class Production2Controller : Controller
             item.CWorkLine = Truncate(lineCd, 6);
         }
 
-        var success = await _apiService.SaveYieldBatchAsync(items);
-        if (!success)
+        var result = await _apiService.SaveYieldBatchAsync(items);
+        if (!result.Success)
         {
-            return StatusCode(500, new { success = false, message = "Lỗi khi lưu danh sách vào TRTB_M_KEYIN_YIELD" });
+            return StatusCode(500, new { success = false, message = result.Message ?? "Lỗi khi lưu danh sách vào TRTB_M_KEYIN_YIELD" });
         }
 
-        return Ok(new { success = true, count = items.Count });
+        return Ok(new { success = true, count = result.Count, ordNo = distinctOrders.FirstOrDefault() });
     }
 
     // ============================================================
@@ -146,6 +153,46 @@ public class Production2Controller : Controller
 
         var rows = await _apiService.GetSizePivotByOrderAsync(ordNo.Trim());
         return Ok(new { success = true, data = rows });
+    }
+
+    // ============================================================
+    // 5. CHỜ SET IN — trạng thái theo Order: TOTAL kế hoạch / đã quét / còn lại theo từng part+size
+    // ============================================================
+    [HttpGet]
+    public IActionResult Pending(string? ordNo)
+    {
+        ViewData["OrdNo"] = ordNo;
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPartYieldStatus([FromQuery] string ordNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo))
+        {
+            return BadRequest(new { success = false, message = "Vui lòng nhập số Order." });
+        }
+
+        var rows = await _apiService.GetPartYieldStatusByOrderAsync(ordNo.Trim());
+        return Ok(new { success = true, data = rows });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompleteOrder([FromQuery] string ordNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo))
+        {
+            return BadRequest(new { success = false, message = "Vui lòng nhập số Order." });
+        }
+
+        var ok = await _apiService.CompleteOrderAsync(ordNo.Trim());
+        if (!ok)
+        {
+            return StatusCode(500, new { success = false, message = "Không thể đánh dấu hoàn tất." });
+        }
+
+        return Ok(new { success = true });
     }
 
     private static string? Truncate(string? value, int maxLength)

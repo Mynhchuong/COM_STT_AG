@@ -1,0 +1,163 @@
+@{
+    ViewData["Title"] = "Chờ Set In - Sản xuất";
+    var initialOrdNo = ViewData["OrdNo"] as string;
+}
+
+<style>
+    #ordNoInput {
+        font-size: 1.1rem;
+        font-weight: 700;
+        min-height: 48px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        max-width: 280px;
+    }
+
+    .pivot-table-wrap {
+        overflow: auto;
+        max-height: 82vh;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        /* Cuộn mượt kiểu quán tính trên tablet/điện thoại (iOS Safari) */
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x pan-y;
+    }
+
+    #pivotTable {
+        border-collapse: separate;
+        border-spacing: 0;
+        white-space: nowrap;
+        font-size: 0.95rem;
+    }
+
+    #pivotTable th,
+    #pivotTable td {
+        padding: 0.65rem 0.6rem;
+        border-bottom: 1px solid #e9ecef;
+        border-right: 1px solid #f1f3f5;
+        text-align: right;
+        min-width: 52px;
+    }
+    #pivotTable td.size-col-zero {
+        color: #adb5bd;
+    }
+
+    #pivotTable thead th {
+        position: sticky;
+        top: 0;
+        background: #344767;
+        color: #fff;
+        z-index: 3;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    /* Cột meta + TỔNG bên trái luôn dính lại khi cuộn ngang — PHẢI có width cố định
+       khớp đúng "left" của cột kế tiếp, nếu không nội dung dài (VD tên part) sẽ tràn
+       đè lên cột sau (chữ dính liền, không cách). */
+    #pivotTable th.meta-col,
+    #pivotTable td.meta-col,
+    #pivotTable th.total-col,
+    #pivotTable td.total-col {
+        position: sticky;
+        background: #fff;
+        z-index: 2;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    #pivotTable th.meta-col {
+        text-align: left;
+    }
+    #pivotTable thead th.meta-col,
+    #pivotTable thead th.total-col {
+        z-index: 4;
+        background: #344767;
+    }
+
+    #pivotTable .col-part-no    { left: 0px;   width: 90px;  min-width: 90px;  max-width: 90px; }
+    #pivotTable .col-part-name  { left: 90px;  width: 230px; min-width: 230px; max-width: 230px; text-align: left; }
+    #pivotTable .col-row-status { left: 320px; width: 100px; min-width: 100px; max-width: 100px; }
+    #pivotTable .col-total      { left: 420px; width: 80px;  min-width: 80px;  max-width: 80px; }
+    #pivotTable td.meta-col.rowtype-total { color: #344767; }
+    #pivotTable td.meta-col.rowtype-done { color: #2dce89; }
+    #pivotTable td.meta-col.rowtype-remain { color: #f5365c; }
+
+    #pivotTable tr.row-total td { background: rgba(52, 71, 103, 0.06); font-weight: 800; border-top: 3px solid #344767; }
+    #pivotTable tr.row-done td { background: rgba(45, 206, 137, 0.06); }
+    #pivotTable tr.row-remain td { background: rgba(245, 54, 92, 0.05); }
+    #pivotTable tr.row-remain td.zero { color: #2dce89; font-weight: 800; }
+    #pivotTable tr.row-remain td.nonzero { color: #f5365c; }
+
+    #pivotTable td.total-col,
+    #pivotTable th.total-col {
+        border-right: 2px solid #344767;
+        font-weight: 800;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12 mb-2">
+        <div class="card bg-gradient-warning border-radius-lg text-white">
+            <div class="card-body p-2 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="material-symbols-rounded" style="font-size:1.4rem;">pending_actions</i>
+                    <h6 class="text-white font-weight-bolder mb-0">CHỜ SET IN</h6>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white btn-sm mb-0 py-1 d-inline-flex align-items-center gap-1">
+                        <i class="material-symbols-rounded">home</i>Trang chủ
+                    </a>
+                    <a asp-action="SetIn" class="btn btn-outline-white btn-sm mb-0 py-1 d-inline-flex align-items-center gap-1">
+                        <i class="material-symbols-rounded">qr_code_scanner</i>Set In tiếp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="col-12 mb-2">
+        <div class="card border-radius-lg">
+            <div class="card-body p-2 px-3 d-flex flex-wrap align-items-center gap-2">
+                <label for="ordNoInput" class="text-xs font-weight-bolder text-dark mb-0">Order:</label>
+                <input type="text" id="ordNoInput" class="form-control" placeholder="VD: 410766" autocomplete="off" value="@initialOrdNo" style="max-width:180px; min-height:38px; padding:0.4rem 0.6rem;" />
+                <button type="button" id="btnFindOrder" class="btn bg-gradient-warning mb-0 px-3 d-flex align-items-center gap-1" style="min-height:38px;">
+                    <i class="material-symbols-rounded">search</i>Tìm
+                </button>
+                <button type="button" id="btnCompleteOrder" class="btn bg-gradient-success mb-0 px-3 d-flex align-items-center gap-1 ms-auto" style="min-height:38px;" disabled>
+                    <i class="material-symbols-rounded">check_circle</i>Hoàn tất
+                </button>
+                <span id="pivotStatus" class="text-sm text-secondary ms-2"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card border-radius-lg">
+            <div class="card-body p-2">
+                <div class="pivot-table-wrap">
+                    <table id="pivotTable" class="mb-0 w-100" style="display:none;">
+                        <thead>
+                            <tr id="pivotHeaderRow"></tr>
+                        </thead>
+                        <tbody id="pivotBody"></tbody>
+                    </table>
+                    <div id="pivotEmpty" class="text-center py-5 text-secondary text-sm">
+                        <i class="material-symbols-rounded text-secondary text-4xl mb-2">table_chart</i>
+                        <p class="mb-0">Nhập số Order rồi bấm Tìm để xem trạng thái.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.pendingConfig = { initialOrdNo: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(initialOrdNo)) };
+    </script>
+    <script src="~/js/pages/production2-pending.js" asp-append-version="true"></script>
+}

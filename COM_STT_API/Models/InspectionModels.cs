@@ -167,6 +167,9 @@ public class KeyinYieldItemDto
     [JsonPropertyName("Q_QTY")]
     public int QQty { get; set; }
 
+    [JsonPropertyName("Q_PLAN")]
+    public int QPlan { get; set; }
+
     [JsonPropertyName("I_IP_NO")]
     public string? IIpNo { get; set; }
 }

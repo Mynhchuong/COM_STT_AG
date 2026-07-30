@@ -23,6 +23,12 @@ public class YieldController : ControllerBase
             return BadRequest(new { success = false, message = "Danh sách thẻ lưu rỗng." });
         }
 
+        var distinctOrders = items.Select(i => i.COrdNo ?? string.Empty).Distinct().ToList();
+        if (distinctOrders.Count > 1)
+        {
+            return BadRequest(new { success = false, message = "Tất cả thẻ trong 1 lượt lưu phải cùng 1 Order (PO). Đang có nhiều Order khác nhau: " + string.Join(", ", distinctOrders) });
+        }
+
         try
         {
             var savedCount = await _yieldService.SaveYieldBatchAsync(items);
@@ -77,6 +83,44 @@ public class YieldController : ControllerBase
         try
         {
             var rows = await _yieldService.GetSizePivotByOrderAsync(ordNo.Trim());
+            return Ok(new { success = true, total = rows.Count, data = rows });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost("complete-order")]
+    public async Task<IActionResult> CompleteOrder([FromQuery] string ordNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số ordNo" });
+        }
+
+        try
+        {
+            var updatedRows = await _yieldService.CompleteOrderAsync(ordNo.Trim());
+            return Ok(new { success = true, updatedRows });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet("part-status")]
+    public async Task<IActionResult> GetPartStatus([FromQuery] string ordNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số ordNo" });
+        }
+
+        try
+        {
+            var rows = await _yieldService.GetPartYieldStatusByOrderAsync(ordNo.Trim());
             return Ok(new { success = true, total = rows.Count, data = rows });
         }
         catch (Exception ex)

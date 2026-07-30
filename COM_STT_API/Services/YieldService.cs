@@ -29,9 +29,23 @@ public class YieldService
         int count = 0;
         var now = DateTime.Now;
 
+        // Chặn trùng NGAY TRONG 1 lần bấm Lưu (VD: gửi lại do lỗi mạng khiến batch bị trùng) —
+        // không đụng tới các thẻ hợp lệ khác nhau đã lưu ở NHỮNG LẦN quét/lưu trước đó, vì
+        // Q_QTY luôn lấy từ kế hoạch nên nhiều thẻ khác nhau cùng Style/Size vẫn hợp lệ và cần giữ đủ.
+        var seenInBatch = new HashSet<string>();
+
         for (int i = 0; i < items.Count; i++)
         {
             var item = items[i];
+
+            var dedupKey = string.Join('|',
+                item.CAction, item.CKeyinloc, item.CPoNum, item.COrdNo,
+                item.CStyle, item.CSize, item.CWidth, item.QQty);
+            if (!seenInBatch.Add(dedupKey))
+            {
+                continue; // dòng này trùng y hệt 1 dòng khác đã xử lý trong cùng batch — bỏ qua
+            }
+
             // Tăng nhẹ 1 giây giữa các dòng nếu cần để đảm bảo tính duy nhất của D_GATHER nếu trùng toàn bộ các cột khác
             var itemTime = now.AddSeconds(i).ToString("yyyyMMddHHmmss");
 
@@ -64,23 +78,46 @@ public class YieldService
     }
 
     // Ghi thêm vào TRTB_M_KEYIN_PART_YIELD (nổ theo routing/part cho công đoạn CUT_2) mỗi khi
-    // lưu 1 dòng vào TRTB_M_KEYIN_YIELD. D_GATHER ở bảng này chỉ có độ chính xác theo NGÀY nên
-    // quét lại cùng Order/Style/Size trong cùng ngày sẽ đụng unique constraint — bỏ qua vì đó là
-    // hành vi mong đợi (không phải lỗi thật), không chặn việc lưu KEYIN_YIELD chính.
+    // lưu 1 dòng vào TRTB_M_KEYIN_YIELD. Bảng này chỉ có 1 dòng/part/Order/Style/Size/NGÀY nên
+    // check tồn tại TRƯỚC khi insert (thay vì insert rồi bắt lỗi trùng).
     private async Task InsertPartYieldAsync(KeyinYieldItemDto item)
     {
+        var exists = await PartYieldExistsTodayAsync(item.COrdNo, item.CSize, item.CStyle);
+        if (exists) return;
+
         try
         {
             await _db.ExecuteProcedureAsync("MES.SP_INSERT_KEYIN_PART_YIELD",
                 new OracleParameter("p_i_po_no", item.COrdNo ?? string.Empty),
                 new OracleParameter("p_c_size", item.CSize ?? string.Empty),
                 new OracleParameter("p_c_style", item.CStyle ?? string.Empty),
-                new OracleParameter("p_q_qty", item.QQty));
+                new OracleParameter("p_q_qty", item.QQty),
+                new OracleParameter("p_q_plan", item.QPlan));
         }
         catch (OracleException ex) when (ex.Number == 1)
         {
-            // Đã có dữ liệu part-yield cho Order/Style/Size này hôm nay — bỏ qua.
+            // Lưới an toàn cho race condition giữa lúc check và lúc insert — đã có rồi thì bỏ qua.
         }
+    }
+
+    private async Task<bool> PartYieldExistsTodayAsync(string? ordNo, string? size, string? style)
+    {
+        // Lưu ý: "SIZE" là từ khoá dành riêng của Oracle — không dùng ":size" làm tên bind
+        // variable (gây ORA-01745), đổi thành ":sizeVal"/":styleVal".
+        const string sql = @"
+            SELECT COUNT(*) AS CNT
+            FROM MES.TRTB_M_KEYIN_PART_YIELD
+            WHERE D_GATHER = TO_CHAR(SYSDATE, 'YYYYMMDD')
+              AND I_PO_NO = :ordNo
+              AND C_SIZE = :sizeVal
+              AND C_STYLE = :styleVal";
+
+        var results = await _db.ExecuteQueryAsync(sql, r => Convert.ToInt32(r["CNT"]),
+            new OracleParameter("ordNo", ordNo ?? string.Empty),
+            new OracleParameter("sizeVal", size ?? string.Empty),
+            new OracleParameter("styleVal", style ?? string.Empty));
+
+        return results.FirstOrDefault() > 0;
     }
 
     public async Task<List<KeyinYieldLogItem>> GetTodayAsync(string? worker)
@@ -148,6 +185,50 @@ public class YieldService
             CWidth = r["C_WIDTH"] as string,
             CAction = r["C_ACTION"] as string,
             CKeyinLoc = r["C_KEYINLOC"] as string
+        };
+
+        foreach (var size in SizeCodes)
+        {
+            var col = "SIZE_" + size;
+            var val = r[col];
+            row.Sizes[size] = val == DBNull.Value ? 0 : Convert.ToInt32(val);
+        }
+
+        return row;
+    }
+
+    // Đánh dấu hoàn tất Set In cho cả Order — không bắt buộc CÒN LẠI = 0, người dùng tự quyết định.
+    public async Task<int> CompleteOrderAsync(string ordNo)
+    {
+        const string sql = @"
+            UPDATE MES.TRTB_M_KEYIN_PART_YIELD
+            SET IS_COMPLETE = 'Y', DATE_COMPLETE = SYSDATE
+            WHERE I_PO_NO = :ordNo";
+
+        return await _db.ExecuteNonQueryAsync(sql, new OracleParameter("ordNo", ordNo));
+    }
+
+    public async Task<List<KeyinPartYieldStatusRow>> GetPartYieldStatusByOrderAsync(string ordNo)
+    {
+        var sizeCols = string.Join(", ", SizeCodes.Select(s => "SIZE_" + s));
+        var sql = $@"
+            SELECT I_PO_NO, C_STYLE, ROW_TYPE, I_PARTS_NO, N_PARTS_NO, {sizeCols}
+            FROM MES.V_KEYIN_PART_YIELD_STATUS
+            WHERE I_PO_NO = :ordNo
+            ORDER BY I_PARTS_NO, ROW_TYPE";
+
+        return await _db.ExecuteQueryAsync(sql, MapPartYieldStatusRow, new OracleParameter("ordNo", ordNo));
+    }
+
+    private static KeyinPartYieldStatusRow MapPartYieldStatusRow(OracleDataReader r)
+    {
+        var row = new KeyinPartYieldStatusRow
+        {
+            IPoNo = r["I_PO_NO"] as string,
+            CStyle = r["C_STYLE"] as string,
+            RowType = r["ROW_TYPE"] as string,
+            IPartsNo = r["I_PARTS_NO"] as string,
+            NPartsNo = r["N_PARTS_NO"] as string
         };
 
         foreach (var size in SizeCodes)
