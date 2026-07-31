@@ -21,7 +21,7 @@ public static class SideMenuBuilder
                     new SideMenuItem { Title = "Tổng quan", Url = "~/Home/Index",       Icon = "dashboard" },
                     new SideMenuItem { Title = "Test scan hàng loạt", Url = "~/Scan/Index", Icon = "qr_code_scanner" },
                     new SideMenuItem { Title = "Sản xuất", Url = "~/Production2/Index", Icon = "precision_manufacturing" },
-                    new SideMenuItem { Title = "QC", Url = "~/Qc/Index", Icon = "verified" },
+                    // QC tạm ẩn khỏi menu theo yêu cầu — action/view vẫn còn nguyên.
                     new SideMenuItem { Title = "Báo cáo", Url = "~/Report/Index", Icon = "bar_chart" },
                     new SideMenuItem { Title = "Đổi mật khẩu", Url = "~/Account/ChangePassword", Icon = "lock_reset" },
                 }
