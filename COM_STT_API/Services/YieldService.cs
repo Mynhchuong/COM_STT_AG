@@ -7,15 +7,17 @@ namespace COM_STT_API.Services;
 public class YieldService
 {
     private readonly AgmesOracleService _db;
+    private readonly CompSttSetService _compSttSetService;
 
-    public YieldService(AgmesOracleService db)
+    public YieldService(AgmesOracleService db, CompSttSetService compSttSetService)
     {
         _db = db;
+        _compSttSetService = compSttSetService;
     }
 
-    public async Task<int> SaveYieldBatchAsync(List<KeyinYieldItemDto> items)
+    public async Task<(int Count, string? PartYieldMessage, int? BasketId)> SaveYieldBatchAsync(List<KeyinYieldItemDto> items)
     {
-        if (items == null || !items.Any()) return 0;
+        if (items == null || !items.Any()) return (0, null, null);
 
         const string sql = @"
             INSERT INTO MES.TRTB_M_KEYIN_YIELD (
@@ -38,9 +40,12 @@ public class YieldService
         {
             var item = items[i];
 
+            // PHẢI có PcardNo trong key — 2 thẻ PCard KHÁC NHAU nhưng trùng Style/Size/Qty (rất
+            // thường gặp, VD 2 thẻ cùng PO cùng size) vẫn là 2 dòng hợp lệ cần giữ đủ, không được
+            // coi là trùng. Chỉ khi cùng PcardNo (VD gửi lại do lỗi mạng) mới thật sự là trùng.
             var dedupKey = string.Join('|',
                 item.CAction, item.CKeyinloc, item.CPoNum, item.COrdNo,
-                item.CStyle, item.CSize, item.CWidth, item.QQty);
+                item.CStyle, item.CSize, item.CWidth, item.QQty, item.PcardNo);
             if (!seenInBatch.Add(dedupKey))
             {
                 continue; // dòng này trùng y hệt 1 dòng khác đã xử lý trong cùng batch — bỏ qua
@@ -70,59 +75,49 @@ public class YieldService
             if (affected > 0)
             {
                 count++;
-                // Set Out (C_ACTION='OUTPUT') chỉ lưu vào TRTB_M_KEYIN_YIELD, KHÔNG nổ routing/part
-                // vào TRTB_M_KEYIN_PART_YIELD — bảng đó chỉ dành cho luồng Set In (INPUT).
-                if (string.Equals(item.CAction, "INPUT", StringComparison.OrdinalIgnoreCase))
-                {
-                    await InsertPartYieldAsync(item);
-                }
             }
         }
 
-        return count;
+        // Set In (C_ACTION='INPUT') sau khi lưu xong TRTB_M_KEYIN_YIELD (không đổi, vẫn lưu như cũ ở
+        // trên) — gọi THÊM 1 LẦN DUY NHẤT cho cả lượt (1 hoặc 2 thẻ) qua thủ tục
+        // PROC_CREATE_COMPSTT_SET để tạo SET vào MES.TRTB_M_COMPSTT_SET_HEADER/DETAIL (bảng mới,
+        // tách biệt hoàn toàn với TRTB_M_KEYIN_PART_YIELD/cách cũ SP_INSERT_KEYIN_PART_YIELD).
+        // Set Out (OUTPUT) không gọi — chỉ lưu vào TRTB_M_KEYIN_YIELD.
+        string? partYieldMessage = null;
+        int? basketId = null;
+        if (count > 0 && items[0].CAction?.Equals("INPUT", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            var cardNo1 = items[0].PcardNo;
+            var cardNo2 = items.Count > 1 ? items[1].PcardNo : null;
+            var workerId = items[0].CWorker;
+            partYieldMessage = await CreateCompSttSetAsync(cardNo1, cardNo2, workerId);
+
+            // I_CARD_NO có UNIQUE INDEX riêng nên basket luôn tra được, kể cả khi PROC báo lỗi
+            // trùng (ERROR: đã có basket từ trước) — vẫn cần basketId để chuyển sang Pending2.
+            if (!string.IsNullOrWhiteSpace(cardNo1))
+            {
+                basketId = await _compSttSetService.GetBasketIdByCardNoAsync(cardNo1);
+            }
+        }
+
+        return (count, partYieldMessage, basketId);
     }
 
-    // Ghi thêm vào TRTB_M_KEYIN_PART_YIELD (nổ theo routing/part cho công đoạn CUT_2) mỗi khi
-    // lưu 1 dòng vào TRTB_M_KEYIN_YIELD. Bảng này chỉ có 1 dòng/part/Order/Style/Size/NGÀY nên
-    // check tồn tại TRƯỚC khi insert (thay vì insert rồi bắt lỗi trùng).
-    private async Task InsertPartYieldAsync(KeyinYieldItemDto item)
+    // Tạo SET cho 1 hoặc 2 PCard vừa Set In vào TRTB_M_KEYIN_PART_YIELD qua thủ tục có sẵn.
+    private async Task<string?> CreateCompSttSetAsync(string? cardNo1, string? cardNo2, string? workerId)
     {
-        var exists = await PartYieldExistsTodayAsync(item.COrdNo, item.CSize, item.CStyle);
-        if (exists) return;
-
-        try
+        var resultParam = new OracleParameter("p_result", OracleDbType.Varchar2, 4000)
         {
-            await _db.ExecuteProcedureAsync("MES.SP_INSERT_KEYIN_PART_YIELD",
-                new OracleParameter("p_i_po_no", item.COrdNo ?? string.Empty),
-                new OracleParameter("p_c_size", item.CSize ?? string.Empty),
-                new OracleParameter("p_c_style", item.CStyle ?? string.Empty),
-                new OracleParameter("p_q_qty", item.QQty),
-                new OracleParameter("p_q_plan", item.QPlan));
-        }
-        catch (OracleException ex) when (ex.Number == 1)
-        {
-            // Lưới an toàn cho race condition giữa lúc check và lúc insert — đã có rồi thì bỏ qua.
-        }
-    }
+            Direction = System.Data.ParameterDirection.Output
+        };
 
-    private async Task<bool> PartYieldExistsTodayAsync(string? ordNo, string? size, string? style)
-    {
-        // Lưu ý: "SIZE" là từ khoá dành riêng của Oracle — không dùng ":size" làm tên bind
-        // variable (gây ORA-01745), đổi thành ":sizeVal"/":styleVal".
-        const string sql = @"
-            SELECT COUNT(*) AS CNT
-            FROM MES.TRTB_M_KEYIN_PART_YIELD
-            WHERE D_GATHER = TO_CHAR(SYSDATE, 'YYYYMMDD')
-              AND I_PO_NO = :ordNo
-              AND C_SIZE = :sizeVal
-              AND C_STYLE = :styleVal";
+        await _db.ExecuteProcedureAsync("MES.PROC_CREATE_COMPSTT_SET",
+            new OracleParameter("p_card_no1", cardNo1 ?? string.Empty),
+            new OracleParameter("p_card_no2", string.IsNullOrWhiteSpace(cardNo2) ? (object)DBNull.Value : cardNo2),
+            new OracleParameter("p_worker_id", workerId ?? string.Empty),
+            resultParam);
 
-        var results = await _db.ExecuteQueryAsync(sql, r => Convert.ToInt32(r["CNT"]),
-            new OracleParameter("ordNo", ordNo ?? string.Empty),
-            new OracleParameter("sizeVal", size ?? string.Empty),
-            new OracleParameter("styleVal", style ?? string.Empty));
-
-        return results.FirstOrDefault() > 0;
+        return resultParam.Value == DBNull.Value ? null : resultParam.Value?.ToString();
     }
 
     // Trước khi chuyển từ Set In sang trang Chờ Set In — kiểm tra Style đã có Routing chưa.

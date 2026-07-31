@@ -101,7 +101,7 @@ public class Production2Controller : Controller
             return StatusCode(500, new { success = false, message = result.Message ?? "Lỗi khi lưu danh sách vào TRTB_M_KEYIN_YIELD" });
         }
 
-        return Ok(new { success = true, count = result.Count, ordNo = distinctOrders.FirstOrDefault() });
+        return Ok(new { success = true, count = result.Count, ordNo = distinctOrders.FirstOrDefault(), partYieldMessage = result.PartYieldMessage, basketId = result.BasketId });
     }
 
     // ============================================================
@@ -163,6 +163,66 @@ public class Production2Controller : Controller
     {
         ViewData["OrdNo"] = ordNo;
         return View();
+    }
+
+    // ============================================================
+    // 6. CHỜ SET IN (v2) — dựa trên TRTB_M_COMPSTT_SET_HEADER/DETAIL (basket 1-2 PCard/lượt)
+    // ============================================================
+    [HttpGet]
+    public IActionResult Pending2(int? basketId)
+    {
+        ViewData["BasketId"] = basketId;
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetBasketIdByCard([FromQuery] string cardNo)
+    {
+        if (string.IsNullOrWhiteSpace(cardNo))
+        {
+            return BadRequest(new { success = false, message = "Vui lòng nhập/quét mã PCard." });
+        }
+
+        var basketId = await _apiService.GetBasketIdByCardNoAsync(cardNo.Trim());
+        if (basketId == null)
+        {
+            return NotFound(new { success = false, message = $"Không tìm thấy basket cho PCard {cardNo}." });
+        }
+        return Ok(new { success = true, basketId });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetBasketHeader([FromQuery] int basketId)
+    {
+        var rows = await _apiService.GetBasketHeaderAsync(basketId);
+        return Ok(new { success = true, data = rows });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetBasketDetail([FromQuery] int basketId)
+    {
+        var rows = await _apiService.GetBasketDetailAsync(basketId);
+        return Ok(new { success = true, data = rows });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkBasketDetailDone([FromQuery] int basketId, [FromQuery] string partsNo)
+    {
+        var user = COM_STT_WEB.Helpers.AuthHelper.GetCurrentUser(User);
+        var empCd = user?.EmpCd ?? "N/A";
+        var result = await _apiService.MarkBasketDetailDoneAsync(basketId, partsNo, empCd);
+        return Ok(new { success = result.Success, message = result.Message });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateBasketDetailQty([FromQuery] int basketId, [FromQuery] string partsNo, [FromQuery] int qty)
+    {
+        var user = COM_STT_WEB.Helpers.AuthHelper.GetCurrentUser(User);
+        var empCd = user?.EmpCd ?? "N/A";
+        var result = await _apiService.UpdateBasketDetailQtyAsync(basketId, partsNo, qty, empCd);
+        return Ok(new { success = result.Success, message = result.Message });
     }
 
     [HttpGet]

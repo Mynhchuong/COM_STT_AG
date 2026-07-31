@@ -406,6 +406,13 @@
                 showScanStatus(false, `PCard ${pcardNo} đã có trong danh sách vừa đọc!`);
                 return;
             }
+            // Set In chỉ cho quét tối đa 2 thẻ / 1 lượt
+            const MAX_CARDS = 2;
+            const MAX_QTY = 24;
+            if (scannedList.length >= MAX_CARDS) {
+                showScanStatus(false, `Đã đủ tối đa ${MAX_CARDS} thẻ trong 1 lượt Set In! Bấm Lưu hoặc Xoá danh sách để quét đợt mới.`);
+                return;
+            }
             if (pendingLookups.has(pcardNo)) {
                 return; // đang tra cứu dở cho mã này, bỏ qua các lần quét trùng trong lúc chờ
             }
@@ -431,6 +438,12 @@
                         qPlan:     plan.Q_PLAN || plan.qPlan || 0,
                         groupSum:  plan.MES_GROUP_SUM || plan.mesGroupSum || ''
                     };
+
+                    const currentTotalQty = scannedList.reduce((sum, i) => sum + i.qty, 0);
+                    if (currentTotalQty + item.qty > MAX_QTY) {
+                        showScanStatus(false, `Vượt quá tổng số lượng tối đa ${MAX_QTY} pcs/lượt (hiện ${currentTotalQty} + thẻ này ${item.qty})!`);
+                        return;
+                    }
 
                     scannedList.unshift(item); // thêm vào đầu danh sách
                     renderScannedList();
@@ -545,7 +558,8 @@
                 C_STYLE:     item.style || '',
                 C_SIZE:      item.size || '',
                 Q_QTY:       item.qty || 0,
-                Q_PLAN:      item.qPlan || 0
+                Q_PLAN:      item.qPlan || 0,
+                PCARD_NO:    item.pcardNo || ''
             }));
 
             try {
@@ -562,20 +576,23 @@
 
                 if (res.ok && data.success) {
                     const count = data.count || scannedList.length;
-                    const ordNo = data.ordNo;
-                    const styles = [...new Set(payload.map(p => p.C_STYLE).filter(Boolean))];
+                    const basketId = data.basketId;
 
                     // Xóa sạch danh sách sau khi lưu thành công để sẵn sàng đợt tiếp
                     scannedList.length = 0;
                     renderScannedList();
                     updateCounters();
 
-                    showScanStatus(true, `✓ Lưu thành công ${count} thẻ PCard vào TRTB_M_KEYIN_YIELD!`);
+                    let saveMsg = `✓ Lưu thành công ${count} thẻ PCard vào TRTB_M_KEYIN_YIELD!`;
+                    if (data.partYieldMessage) saveMsg += ` ${data.partYieldMessage}`;
+                    showScanStatus(true, saveMsg);
 
-                    // Trước khi chuyển sang "Chờ Set In" — kiểm tra Style đã có Routing chưa. Chưa có
-                    // Routing thì SP nổ part sẽ không ra dòng nào, vào Pending cũng không có gì để xem.
-                    if (ordNo && styles.length > 0) {
-                        checkRoutingThenGoToPending(ordNo, styles);
+                    // Chuyển sang trang "Chờ Set In (v2)" — hiện thông tin PCard + số lượng cần
+                    // chuẩn bị theo từng part của basket vừa tạo.
+                    if (basketId) {
+                        setTimeout(function () {
+                            window.location.href = '/Production2/Pending2?basketId=' + encodeURIComponent(basketId);
+                        }, 1200);
                     }
                 } else {
                     showScanStatus(false, data.message || 'Lỗi khi lưu dữ liệu vào cơ sở dữ liệu!');
@@ -589,28 +606,6 @@
                 btnSave.classList.remove('opacity-75');
             }
         });
-
-        // Kiểm tra từng Style vừa lưu đã có Routing (TRTB_M_KEYIN_ROUTING) chưa trước khi chuyển
-        // sang trang Chờ Set In — thiếu Routing thì báo và Ở LẠI trang Set In, không chuyển trang.
-        async function checkRoutingThenGoToPending(ordNo, styles) {
-            try {
-                for (const style of styles) {
-                    const res = await fetch(WEB_BASE + '/RoutingExists?style=' + encodeURIComponent(style));
-                    const data = await res.json();
-                    if (!(res.ok && data.success && data.exists)) {
-                        showScanStatus(false, `⚠ Style "${style}" CHƯA có Routing trong hệ thống — chưa thể xem trang Chờ Set In. Vui lòng báo bộ phận kỹ thuật cập nhật Routing rồi thử lại.`);
-                        return;
-                    }
-                }
-                showScanStatus(true, 'Đang chuyển sang trang Chờ Set In...');
-                setTimeout(function () {
-                    window.location.href = '/Production2/Pending?ordNo=' + encodeURIComponent(ordNo);
-                }, 1200);
-            } catch (err) {
-                console.error(err);
-                showScanStatus(false, 'Không thể kiểm tra Routing — vẫn ở lại trang Set In, vui lòng thử lại.');
-            }
-        }
     })();
     </script>
 }

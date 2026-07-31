@@ -126,7 +126,9 @@ public class ProductionApiService
         {
             Success = response.IsSuccessStatusCode && (body?.Success ?? false),
             Count = body?.SavedCount ?? 0,
-            Message = body?.Message
+            Message = body?.Message,
+            PartYieldMessage = body?.PartYieldMessage,
+            BasketId = body?.BasketId
         };
     }
 
@@ -155,6 +157,44 @@ public class ProductionApiService
         var response = await _httpClient.GetFromJsonAsync<RoutingExistsApiResponse>(
             $"api/yield/routing-exists?style={Uri.EscapeDataString(style)}");
         return response?.Exists ?? false;
+    }
+
+    public async Task<int?> GetBasketIdByCardNoAsync(string cardNo)
+    {
+        var response = await _httpClient.GetAsync($"api/compstt-set/basket-by-card?cardNo={Uri.EscapeDataString(cardNo)}");
+        if (!response.IsSuccessStatusCode) return null;
+        var body = await response.Content.ReadFromJsonAsync<BasketIdApiResponse>();
+        return body?.BasketId;
+    }
+
+    public async Task<List<CompSttSetHeaderRowModel>> GetBasketHeaderAsync(int basketId)
+    {
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<CompSttSetHeaderRowModel>>>(
+            $"api/compstt-set/header?basketId={basketId}");
+        return response?.Data ?? new List<CompSttSetHeaderRowModel>();
+    }
+
+    public async Task<List<CompSttSetDetailRowModel>> GetBasketDetailAsync(int basketId)
+    {
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<CompSttSetDetailRowModel>>>(
+            $"api/compstt-set/detail?basketId={basketId}");
+        return response?.Data ?? new List<CompSttSetDetailRowModel>();
+    }
+
+    public async Task<PartYieldUpdateResult> MarkBasketDetailDoneAsync(int basketId, string partsNo, string workerId)
+    {
+        var url = $"api/compstt-set/mark-done?basketId={basketId}&partsNo={Uri.EscapeDataString(partsNo)}&workerId={Uri.EscapeDataString(workerId)}";
+        var response = await _httpClient.PostAsync(url, null);
+        var body = await response.Content.ReadFromJsonAsync<PartYieldUpdateApiResponse>();
+        return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
+    }
+
+    public async Task<PartYieldUpdateResult> UpdateBasketDetailQtyAsync(int basketId, string partsNo, int qty, string workerId)
+    {
+        var url = $"api/compstt-set/update-qty?basketId={basketId}&partsNo={Uri.EscapeDataString(partsNo)}&qty={qty}&workerId={Uri.EscapeDataString(workerId)}";
+        var response = await _httpClient.PostAsync(url, null);
+        var body = await response.Content.ReadFromJsonAsync<PartYieldUpdateApiResponse>();
+        return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
     }
 
     public async Task<PartYieldUpdateResult> MarkPartYieldDoneAsync(string ordNo, string size, string partsNo)
@@ -310,6 +350,9 @@ public class KeyinYieldItemModel
 
     [JsonPropertyName("I_IP_NO")]
     public string? IIpNo { get; set; }
+
+    [JsonPropertyName("PCARD_NO")]
+    public string? PcardNo { get; set; }
 }
 
 public class KeyinYieldLogItemModel
@@ -388,6 +431,12 @@ public class SaveYieldBatchApiResponse
 
     [JsonPropertyName("message")]
     public string? Message { get; set; }
+
+    [JsonPropertyName("partYieldMessage")]
+    public string? PartYieldMessage { get; set; }
+
+    [JsonPropertyName("basketId")]
+    public int? BasketId { get; set; }
 }
 
 public class SaveYieldBatchResult
@@ -395,6 +444,8 @@ public class SaveYieldBatchResult
     public bool Success { get; set; }
     public int Count { get; set; }
     public string? Message { get; set; }
+    public string? PartYieldMessage { get; set; }
+    public int? BasketId { get; set; }
 }
 
 public class RoutingExistsApiResponse
@@ -449,4 +500,97 @@ public class KeyinPartYieldStatusRowModel
 
     [JsonPropertyName("SIZES")]
     public Dictionary<string, int> Sizes { get; set; } = new();
+}
+
+public class BasketIdApiResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("basketId")]
+    public int? BasketId { get; set; }
+}
+
+public class CompSttSetHeaderRowModel
+{
+    [JsonPropertyName("BASKET_ID")]
+    public int BasketId { get; set; }
+
+    [JsonPropertyName("I_CARD_NO")]
+    public string? ICardNo { get; set; }
+
+    [JsonPropertyName("I_PO_NO")]
+    public string? IPoNo { get; set; }
+
+    [JsonPropertyName("C_SIZE")]
+    public string? CSize { get; set; }
+
+    [JsonPropertyName("C_STYLE")]
+    public string? CStyle { get; set; }
+
+    [JsonPropertyName("C_KEYINLOC")]
+    public string? CKeyinloc { get; set; }
+
+    [JsonPropertyName("I_PARTS_NO")]
+    public string? IPartsNo { get; set; }
+
+    [JsonPropertyName("N_PARTS_NO")]
+    public string? NPartsNo { get; set; }
+
+    [JsonPropertyName("Q_PLAN")]
+    public int QPlan { get; set; }
+
+    [JsonPropertyName("C_QTY")]
+    public int CQty { get; set; }
+
+    [JsonPropertyName("IS_IN")]
+    public string? IsIn { get; set; }
+
+    [JsonPropertyName("IN_DATE")]
+    public DateTime? InDate { get; set; }
+
+    [JsonPropertyName("IS_COMPLETE_SET")]
+    public string? IsCompleteSet { get; set; }
+
+    [JsonPropertyName("IS_OUT")]
+    public string? IsOut { get; set; }
+}
+
+public class CompSttSetDetailRowModel
+{
+    [JsonPropertyName("BASKET_ID")]
+    public int BasketId { get; set; }
+
+    [JsonPropertyName("I_PO_NO")]
+    public string? IPoNo { get; set; }
+
+    [JsonPropertyName("C_SIZE")]
+    public string? CSize { get; set; }
+
+    [JsonPropertyName("C_STYLE")]
+    public string? CStyle { get; set; }
+
+    [JsonPropertyName("C_KEYINLOC")]
+    public string? CKeyinloc { get; set; }
+
+    [JsonPropertyName("I_PARTS_NO")]
+    public string? IPartsNo { get; set; }
+
+    [JsonPropertyName("N_PARTS_NO")]
+    public string? NPartsNo { get; set; }
+
+    [JsonPropertyName("C_QTY")]
+    public int CQty { get; set; }
+
+    [JsonPropertyName("QTY_RECEIVE")]
+    public int QtyReceive { get; set; }
+
+    [JsonPropertyName("IS_DONE")]
+    public string? IsDone { get; set; }
+
+    [JsonPropertyName("DATE_DONE")]
+    public DateTime? DateDone { get; set; }
+
+    [JsonPropertyName("WORKER_ID")]
+    public string? WorkerId { get; set; }
 }

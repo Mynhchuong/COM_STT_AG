@@ -172,6 +172,10 @@ public class KeyinYieldItemDto
 
     [JsonPropertyName("I_IP_NO")]
     public string? IIpNo { get; set; }
+
+    // Mã PCard vừa quét — dùng để gọi MES.PROC_CREATE_COMPSTT_SET (không phải cột của TRTB_M_KEYIN_YIELD).
+    [JsonPropertyName("PCARD_NO")]
+    public string? PcardNo { get; set; }
 }
 
 public class KeyinYieldLogItem

@@ -31,8 +31,13 @@ public class YieldController : ControllerBase
 
         try
         {
-            var savedCount = await _yieldService.SaveYieldBatchAsync(items);
-            return Ok(new { success = true, savedCount, message = $"Đã lưu thành công {savedCount} dòng vào TRTB_M_KEYIN_YIELD" });
+            var (savedCount, partYieldMessage, basketId) = await _yieldService.SaveYieldBatchAsync(items);
+            var message = $"Đã lưu thành công {savedCount} dòng vào TRTB_M_KEYIN_YIELD";
+            if (!string.IsNullOrWhiteSpace(partYieldMessage))
+            {
+                message += $" — {partYieldMessage}";
+            }
+            return Ok(new { success = true, savedCount, partYieldMessage, basketId, message });
         }
         catch (Exception ex)
         {
