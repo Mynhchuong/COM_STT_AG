@@ -53,7 +53,7 @@ public class YieldService
             {
                 new("dGather",   itemTime),
                 new("cAction",   item.CAction ?? "INPUT"),
-                new("cKeyinloc", item.CKeyinloc ?? "SET"),
+                new("cKeyinloc", item.CKeyinloc ?? "CUT_2"),
                 new("cKeyinpart",item.CKeyinpart ?? "N/A"),
                 new("cPoNum",    item.CPoNum ?? string.Empty),
                 new("cOrdNo",    item.COrdNo ?? item.CPoNum ?? string.Empty),
@@ -70,7 +70,12 @@ public class YieldService
             if (affected > 0)
             {
                 count++;
-                await InsertPartYieldAsync(item);
+                // Set Out (C_ACTION='OUTPUT') chỉ lưu vào TRTB_M_KEYIN_YIELD, KHÔNG nổ routing/part
+                // vào TRTB_M_KEYIN_PART_YIELD — bảng đó chỉ dành cho luồng Set In (INPUT).
+                if (string.Equals(item.CAction, "INPUT", StringComparison.OrdinalIgnoreCase))
+                {
+                    await InsertPartYieldAsync(item);
+                }
             }
         }
 
@@ -120,10 +125,29 @@ public class YieldService
         return results.FirstOrDefault() > 0;
     }
 
-    public async Task<List<KeyinYieldLogItem>> GetTodayAsync(string? worker)
+    // Trước khi chuyển từ Set In sang trang Chờ Set In — kiểm tra Style đã có Routing chưa.
+    // Chưa có Routing thì SP_INSERT_KEYIN_PART_YIELD sẽ không nổ được dòng nào vào
+    // TRTB_M_KEYIN_PART_YIELD (do JOIN với bảng này ra rỗng) — vào trang Chờ Set In cũng
+    // không có gì để xem, nên chặn sớm ở đây và báo cho biết luôn.
+    public async Task<bool> RoutingExistsAsync(string style)
     {
-        var conditions = new List<string> { "SUBSTR(D_GATHER, 1, 8) = :today" };
-        var parameters = new List<OracleParameter> { new("today", DateTime.Now.ToString("yyyyMMdd")) };
+        const string sql = @"
+            SELECT COUNT(*) AS CNT
+            FROM MES.TRTB_M_KEYIN_ROUTING
+            WHERE C_STYLE = :styleVal";
+
+        var results = await _db.ExecuteQueryAsync(sql, r => Convert.ToInt32(r["CNT"]),
+            new OracleParameter("styleVal", style ?? string.Empty));
+        return results.FirstOrDefault() > 0;
+    }
+
+    // date: định dạng yyyyMMdd — không truyền thì mặc định hôm nay (giữ đúng hành vi cũ).
+    public async Task<List<KeyinYieldLogItem>> GetTodayAsync(string? worker, string? date = null)
+    {
+        var day = string.IsNullOrWhiteSpace(date) ? DateTime.Now.ToString("yyyyMMdd") : date.Trim();
+
+        var conditions = new List<string> { "SUBSTR(D_GATHER, 1, 8) = :day" };
+        var parameters = new List<OracleParameter> { new("day", day) };
 
         if (!string.IsNullOrWhiteSpace(worker))
         {
@@ -197,28 +221,34 @@ public class YieldService
         return row;
     }
 
-    // Đánh dấu hoàn tất Set In cho cả Order — không bắt buộc CÒN LẠI = 0, người dùng tự quyết định.
-    // Chỉ đánh dấu hoàn tất cho từng SIZE (CUT_2) đã xong hết (không còn dòng nào IS_DONE khác 'Y') —
-    // không đánh dấu tràn lan cả Order như trước, tránh chốt nhầm size chưa xử lý xong.
+    // Nút "Hoàn tất": web chỉ cho bấm khi ĐÃ QUÉT = KẾ HOẠCH và CÒN LẠI = 0 ở mọi size/part (kiểm
+    // tra phía client trước khi hiện nút) — nên ở đây chốt thẳng toàn bộ PO/CUT_2 luôn, không cần
+    // NOT EXISTS kiểm tra lại. Sau khi hoàn tất, web sẽ khoá không cho bấm/sửa ô ĐÃ QUÉT nữa.
     public async Task<int> CompleteOrderAsync(string ordNo)
     {
         const string sql = @"
-            UPDATE MES.TRTB_M_KEYIN_PART_YIELD A
-            SET
-                A.IS_COMPLETE       = 'Y',
-                A.DATE_COMPLETE     = SYSDATE
-            WHERE
-                A.I_PO_NO           = :ordNo
-                AND A.C_KEYINLOC    = 'CUT_2'
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM MES.TRTB_M_KEYIN_PART_YIELD B
-                    WHERE B.I_PO_NO = A.I_PO_NO
-                      AND B.C_SIZE = A.C_SIZE
-                      AND B.C_KEYINLOC = A.C_KEYINLOC
-                      AND NVL(B.IS_DONE,'N') <> 'Y')";
+            UPDATE MES.TRTB_M_KEYIN_PART_YIELD
+            SET Q_QTY = Q_PLAN, IS_DONE = 'Y',
+                DATE_DONE = NVL(DATE_DONE, SYSDATE),
+                IS_COMPLETE = 'Y',
+                DATE_COMPLETE = NVL(DATE_COMPLETE, SYSDATE)
+            WHERE I_PO_NO = :ordNo
+              AND C_KEYINLOC = 'CUT_2'";
 
         return await _db.ExecuteNonQueryAsync(sql, new OracleParameter("ordNo", ordNo));
+    }
+
+    // Kiểm tra Order đã bấm Hoàn tất chưa (để khoá lại không cho sửa ô ĐÃ QUÉT khi vào lại trang).
+    public async Task<bool> IsOrderCompleteAsync(string ordNo)
+    {
+        const string sql = @"
+            SELECT COUNT(*) AS CNT
+            FROM MES.TRTB_M_KEYIN_PART_YIELD
+            WHERE I_PO_NO = :ordNo AND C_KEYINLOC = 'CUT_2' AND IS_COMPLETE = 'Y'";
+
+        var results = await _db.ExecuteQueryAsync(sql, r => Convert.ToInt32(r["CNT"]),
+            new OracleParameter("ordNo", ordNo));
+        return results.FirstOrDefault() > 0;
     }
 
     // Bấm 1 lần (chưa xử lý lần nào) trên ô ĐÃ QUÉT — nhận đủ theo kế hoạch.

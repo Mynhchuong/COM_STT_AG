@@ -41,11 +41,11 @@ public class YieldController : ControllerBase
     }
 
     [HttpGet("today")]
-    public async Task<IActionResult> GetToday([FromQuery] string? worker)
+    public async Task<IActionResult> GetToday([FromQuery] string? worker, [FromQuery] string? date)
     {
         try
         {
-            var items = await _yieldService.GetTodayAsync(worker);
+            var items = await _yieldService.GetTodayAsync(worker, date);
             return Ok(new { success = true, total = items.Count, data = items });
         }
         catch (Exception ex)
@@ -103,6 +103,44 @@ public class YieldController : ControllerBase
         {
             var updatedRows = await _yieldService.CompleteOrderAsync(ordNo.Trim());
             return Ok(new { success = true, updatedRows });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet("routing-exists")]
+    public async Task<IActionResult> RoutingExists([FromQuery] string style)
+    {
+        if (string.IsNullOrWhiteSpace(style))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số style" });
+        }
+
+        try
+        {
+            var exists = await _yieldService.RoutingExistsAsync(style.Trim());
+            return Ok(new { success = true, exists });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet("order-complete-status")]
+    public async Task<IActionResult> GetOrderCompleteStatus([FromQuery] string ordNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số ordNo" });
+        }
+
+        try
+        {
+            var isComplete = await _yieldService.IsOrderCompleteAsync(ordNo.Trim());
+            return Ok(new { success = true, isComplete });
         }
         catch (Exception ex)
         {

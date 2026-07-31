@@ -537,7 +537,7 @@
             // Map danh sách scannedList sang định dạng DTO TRTB_M_KEYIN_YIELD
             const payload = scannedList.map(item => ({
                 C_ACTION:    'INPUT',
-                C_KEYINLOC:  'SET',
+                C_KEYINLOC:  'CUT_2',
                 C_KEYINPART: item.partsName || 'VAMP',
                 C_PO_NUM:    item.poNum || '',
                 C_ORD_NO:    item.order || '',
@@ -563,19 +563,19 @@
                 if (res.ok && data.success) {
                     const count = data.count || scannedList.length;
                     const ordNo = data.ordNo;
+                    const styles = [...new Set(payload.map(p => p.C_STYLE).filter(Boolean))];
 
                     // Xóa sạch danh sách sau khi lưu thành công để sẵn sàng đợt tiếp
                     scannedList.length = 0;
                     renderScannedList();
                     updateCounters();
 
-                    showScanStatus(true, `✓ Lưu thành công ${count} thẻ PCard vào TRTB_M_KEYIN_YIELD! Đang chuyển sang trang Chờ Set In...`);
+                    showScanStatus(true, `✓ Lưu thành công ${count} thẻ PCard vào TRTB_M_KEYIN_YIELD!`);
 
-                    // Chuyển sang trang "Chờ Set In" để xem trạng thái kế hoạch/đã quét/còn lại của Order vừa lưu
-                    if (ordNo) {
-                        setTimeout(function () {
-                            window.location.href = '/Production2/Pending?ordNo=' + encodeURIComponent(ordNo);
-                        }, 1200);
+                    // Trước khi chuyển sang "Chờ Set In" — kiểm tra Style đã có Routing chưa. Chưa có
+                    // Routing thì SP nổ part sẽ không ra dòng nào, vào Pending cũng không có gì để xem.
+                    if (ordNo && styles.length > 0) {
+                        checkRoutingThenGoToPending(ordNo, styles);
                     }
                 } else {
                     showScanStatus(false, data.message || 'Lỗi khi lưu dữ liệu vào cơ sở dữ liệu!');
@@ -589,6 +589,28 @@
                 btnSave.classList.remove('opacity-75');
             }
         });
+
+        // Kiểm tra từng Style vừa lưu đã có Routing (TRTB_M_KEYIN_ROUTING) chưa trước khi chuyển
+        // sang trang Chờ Set In — thiếu Routing thì báo và Ở LẠI trang Set In, không chuyển trang.
+        async function checkRoutingThenGoToPending(ordNo, styles) {
+            try {
+                for (const style of styles) {
+                    const res = await fetch(WEB_BASE + '/RoutingExists?style=' + encodeURIComponent(style));
+                    const data = await res.json();
+                    if (!(res.ok && data.success && data.exists)) {
+                        showScanStatus(false, `⚠ Style "${style}" CHƯA có Routing trong hệ thống — chưa thể xem trang Chờ Set In. Vui lòng báo bộ phận kỹ thuật cập nhật Routing rồi thử lại.`);
+                        return;
+                    }
+                }
+                showScanStatus(true, 'Đang chuyển sang trang Chờ Set In...');
+                setTimeout(function () {
+                    window.location.href = '/Production2/Pending?ordNo=' + encodeURIComponent(ordNo);
+                }, 1200);
+            } catch (err) {
+                console.error(err);
+                showScanStatus(false, 'Không thể kiểm tra Routing — vẫn ở lại trang Set In, vui lòng thử lại.');
+            }
+        }
     })();
     </script>
 }

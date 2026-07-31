@@ -3,6 +3,8 @@
         const logListContainer = document.getElementById('logListContainer');
         const logCount = document.getElementById('logCount');
 
+        const logDateInput     = document.getElementById('logDateInput');
+        const logActionFilter  = document.getElementById('logActionFilter');
         const logFilterInput   = document.getElementById('logFilterInput');
         const btnScanFilter    = document.getElementById('btnScanFilter');
         const btnClearFilter   = document.getElementById('btnClearFilter');
@@ -41,7 +43,7 @@
             logCount.textContent = total + ' dòng' + (allItems.length !== total ? ` (lọc từ ${allItems.length})` : '');
 
             if (total === 0) {
-                renderEmpty(allItems.length === 0 ? 'Chưa có dòng nào được ghi hôm nay.' : 'Không có dòng nào khớp bộ lọc.');
+                renderEmpty(allItems.length === 0 ? 'Chưa có dòng nào được ghi trong ngày này.' : 'Không có dòng nào khớp bộ lọc.');
                 return;
             }
 
@@ -93,25 +95,30 @@
 
         function applyFilter() {
             const term = logFilterInput.value.trim().toLowerCase();
+            const action = logActionFilter.value; // '' | 'INPUT' | 'OUTPUT'
             btnClearFilter.classList.toggle('d-none', !term);
 
-            if (!term) {
-                filteredItems = allItems;
-            } else {
-                filteredItems = allItems.filter(function (item) {
-                    return [item.C_STYLE, item.C_ORD_NO, item.C_PO_NUM, item.C_KEYINPART, item.C_KEYINLOC, item.C_WORKER]
-                        .some(function (f) { return (f || '').toString().toLowerCase().includes(term); });
-                });
-            }
+            filteredItems = allItems.filter(function (item) {
+                if (action && (item.C_ACTION || '').toUpperCase() !== action) return false;
+                if (!term) return true;
+                return [item.C_STYLE, item.C_ORD_NO, item.C_PO_NUM, item.C_KEYINPART, item.C_KEYINLOC, item.C_WORKER]
+                    .some(function (f) { return (f || '').toString().toLowerCase().includes(term); });
+            });
 
             currentPage = 1;
             renderPage();
         }
 
+        // yyyy-MM-dd (input date) -> yyyyMMdd (API)
+        function toApiDate(inputDateValue) {
+            return (inputDateValue || '').replace(/-/g, '');
+        }
+
         async function loadLog() {
             renderEmpty('Đang tải...');
             try {
-                const res = await fetch('/Production2/GetTodayLog');
+                const date = toApiDate(logDateInput.value);
+                const res = await fetch('/Production2/GetTodayLog?date=' + encodeURIComponent(date));
                 const data = await res.json();
                 if (res.ok && data.success) {
                     allItems = data.data || [];
@@ -148,7 +155,9 @@
             }
         }
 
-        // --- Lọc bằng gõ tay ---
+        // --- Lọc theo ngày (gọi lại server) và theo IN/OUT + gõ tay (lọc ngay trên dữ liệu đã tải) ---
+        logDateInput.addEventListener('change', loadLog);
+        logActionFilter.addEventListener('change', applyFilter);
         logFilterInput.addEventListener('input', applyFilter);
         btnClearFilter.addEventListener('click', function () {
             logFilterInput.value = '';
@@ -227,6 +236,15 @@
 
         btnCancelFilterScan.addEventListener('click', stopFilterScanner);
         window.addEventListener('beforeunload', stopFilterScanner);
+
+        // Mặc định ngày hôm nay (yyyy-MM-dd theo giờ máy khách)
+        (function initDefaultDate() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            logDateInput.value = `${yyyy}-${mm}-${dd}`;
+        })();
 
         loadLog();
     });

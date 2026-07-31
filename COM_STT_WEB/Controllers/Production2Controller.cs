@@ -114,11 +114,11 @@ public class Production2Controller : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetTodayLog()
+    public async Task<IActionResult> GetTodayLog([FromQuery] string? date)
     {
         var user = COM_STT_WEB.Helpers.AuthHelper.GetCurrentUser(User);
         var empCd = Truncate(user?.EmpCd, 10);
-        var items = await _apiService.GetTodayYieldAsync(empCd);
+        var items = await _apiService.GetTodayYieldAsync(empCd, date);
         return Ok(new { success = true, data = items });
     }
 
@@ -219,6 +219,30 @@ public class Production2Controller : Controller
         }
 
         return Ok(new { success = true });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> RoutingExists([FromQuery] string style)
+    {
+        if (string.IsNullOrWhiteSpace(style))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số style." });
+        }
+
+        var exists = await _apiService.RoutingExistsAsync(style.Trim());
+        return Ok(new { success = true, exists });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetOrderCompleteStatus([FromQuery] string ordNo)
+    {
+        if (string.IsNullOrWhiteSpace(ordNo))
+        {
+            return BadRequest(new { success = false, message = "Vui lòng nhập số Order." });
+        }
+
+        var isComplete = await _apiService.IsOrderCompleteAsync(ordNo.Trim());
+        return Ok(new { success = true, isComplete });
     }
 
     private static string? Truncate(string? value, int maxLength)

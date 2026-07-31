@@ -138,7 +138,7 @@ public class KeyinYieldItemDto
     public string? CAction { get; set; } = "INPUT";
 
     [JsonPropertyName("C_KEYINLOC")]
-    public string? CKeyinloc { get; set; } = "SET";
+    public string? CKeyinloc { get; set; } = "CUT_2";
 
     [JsonPropertyName("C_KEYINPART")]
     public string? CKeyinpart { get; set; }

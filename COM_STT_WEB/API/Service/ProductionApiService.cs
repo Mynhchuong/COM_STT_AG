@@ -143,6 +143,20 @@ public class ProductionApiService
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<bool> IsOrderCompleteAsync(string ordNo)
+    {
+        var response = await _httpClient.GetFromJsonAsync<OrderCompleteStatusApiResponse>(
+            $"api/yield/order-complete-status?ordNo={Uri.EscapeDataString(ordNo)}");
+        return response?.IsComplete ?? false;
+    }
+
+    public async Task<bool> RoutingExistsAsync(string style)
+    {
+        var response = await _httpClient.GetFromJsonAsync<RoutingExistsApiResponse>(
+            $"api/yield/routing-exists?style={Uri.EscapeDataString(style)}");
+        return response?.Exists ?? false;
+    }
+
     public async Task<PartYieldUpdateResult> MarkPartYieldDoneAsync(string ordNo, string size, string partsNo)
     {
         var url = $"api/yield/part-mark-done?ordNo={Uri.EscapeDataString(ordNo)}&size={Uri.EscapeDataString(size)}&partsNo={Uri.EscapeDataString(partsNo)}";
@@ -159,13 +173,12 @@ public class ProductionApiService
         return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
     }
 
-    public async Task<List<KeyinYieldLogItemModel>> GetTodayYieldAsync(string? worker)
+    public async Task<List<KeyinYieldLogItemModel>> GetTodayYieldAsync(string? worker, string? date = null)
     {
-        var url = "api/yield/today";
-        if (!string.IsNullOrWhiteSpace(worker))
-        {
-            url += $"?worker={Uri.EscapeDataString(worker)}";
-        }
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(worker)) query.Add($"worker={Uri.EscapeDataString(worker)}");
+        if (!string.IsNullOrWhiteSpace(date)) query.Add($"date={Uri.EscapeDataString(date)}");
+        var url = "api/yield/today" + (query.Count > 0 ? "?" + string.Join("&", query) : "");
         var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<KeyinYieldLogItemModel>>>(url);
         return response?.Data ?? new List<KeyinYieldLogItemModel>();
     }
@@ -263,7 +276,7 @@ public class KeyinYieldItemModel
     public string? CAction { get; set; } = "INPUT";
 
     [JsonPropertyName("C_KEYINLOC")]
-    public string? CKeyinloc { get; set; } = "SET";
+    public string? CKeyinloc { get; set; } = "CUT_2";
 
     [JsonPropertyName("C_KEYINPART")]
     public string? CKeyinpart { get; set; }
@@ -382,6 +395,24 @@ public class SaveYieldBatchResult
     public bool Success { get; set; }
     public int Count { get; set; }
     public string? Message { get; set; }
+}
+
+public class RoutingExistsApiResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("exists")]
+    public bool Exists { get; set; }
+}
+
+public class OrderCompleteStatusApiResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("isComplete")]
+    public bool IsComplete { get; set; }
 }
 
 public class PartYieldUpdateApiResponse
