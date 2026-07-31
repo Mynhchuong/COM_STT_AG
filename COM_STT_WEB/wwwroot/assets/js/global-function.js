@@ -53,22 +53,24 @@ window.PdaHelper = (function () {
                 gain.connect(audioCtx.destination);
 
                 if (success) {
-                    // Tiếng BÉEP thành công (1400Hz cao trong vắt, 0.12 giây)
-                    osc.type = 'sine';
+                    // Tiếng BÉEP thành công (1400Hz, dùng sóng vuông thay vì sine — nhiều hoạ âm
+                    // hơn nên nghe "xuyên" tiếng ồn nhà máy tốt hơn nhiều; tăng âm lượng lên gần
+                    // mức tối đa an toàn (>1 sẽ bị vỡ tiếng) và kéo dài hơn 1 chút cho dễ nghe).
+                    osc.type = 'square';
                     osc.frequency.setValueAtTime(1400, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                    gain.gain.setValueAtTime(0.9, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
                     osc.start(audioCtx.currentTime);
-                    osc.stop(audioCtx.currentTime + 0.12);
+                    osc.stop(audioCtx.currentTime + 0.18);
                 } else {
-                    // Tiếng TÍT TÍT cảnh báo lỗi (350Hz -> 180Hz âm trầm báo lỗi)
+                    // Tiếng TÍT TÍT cảnh báo lỗi (350Hz -> 180Hz âm trầm báo lỗi) — tăng âm lượng tương tự
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(350, audioCtx.currentTime);
-                    osc.frequency.linearRampToValueAtTime(180, audioCtx.currentTime + 0.25);
-                    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+                    osc.frequency.linearRampToValueAtTime(180, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.9, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
                     osc.start(audioCtx.currentTime);
-                    osc.stop(audioCtx.currentTime + 0.25);
+                    osc.stop(audioCtx.currentTime + 0.3);
                 }
             } catch (e) {
                 console.warn('Web Audio API not supported:', e);
