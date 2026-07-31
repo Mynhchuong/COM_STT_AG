@@ -21,7 +21,25 @@
         const numpadClear   = document.getElementById('numpadClear');
         const numpadBackspace = document.getElementById('numpadBackspace');
 
+        const saveLoadingOverlay = document.getElementById('saveLoadingOverlay');
+
         let currentBasketId = null;
+
+        // Khoá toàn trang trong lúc đang lưu — không chỉ khoá riêng nút vừa bấm. Lý do: nếu chỉ khoá
+        // 1 nút, bấm thêm ô khác trong lúc ô đầu đang lưu vẫn được, và khi ô đầu lưu xong nó render lại
+        // TOÀN BỘ bảng (renderDetail ghi đè innerHTML) — nút của ô thứ 2 sẽ bị "hồi sinh" (mất trạng thái
+        // disabled) ngay giữa lúc yêu cầu lưu của nó vẫn còn đang chạy, dẫn tới bấm trùng/lưu 2 lần.
+        let isSaving = false;
+
+        function showSaveOverlay() {
+            isSaving = true;
+            saveLoadingOverlay.classList.add('show');
+        }
+
+        function hideSaveOverlay() {
+            isSaving = false;
+            saveLoadingOverlay.classList.remove('show');
+        }
 
         function getAntiForgeryToken() {
             const el = document.querySelector('input[name="__RequestVerificationToken"]');
@@ -169,6 +187,8 @@
         let numpadContext = null;
 
         detailBody.addEventListener('click', function (e) {
+            if (isSaving) return; // trang đang khoá lúc lưu — bỏ qua mọi bấm khác
+
             const btn = e.target.closest('.qty-btn');
             if (!btn) return;
 
@@ -186,9 +206,12 @@
         });
 
         async function markDone(partsNo, btn) {
-            // Khoá nút ngay khi bấm — tránh bấm nhanh 2 lần khiến server cộng dồn 2 lần trước khi
-            // lần đầu kịp lưu (VD: đủ 24 -> bấm nhanh 2 cái -> cộng thành 48, sai số liệu thật).
+            // Khoá cả nút lẫn toàn trang ngay khi bấm — tránh bấm nhanh 2 lần khiến server cộng dồn
+            // 2 lần trước khi lần đầu kịp lưu, và tránh bấm sang ô KHÁC trong lúc ô này đang lưu
+            // (nếu không khoá cả trang, khi lưu xong findBasket() sẽ vẽ lại toàn bộ bảng và có thể
+            // "hồi sinh" nút của ô khác giữa chừng khi nó cũng đang có yêu cầu lưu chạy dở).
             btn.disabled = true;
+            showSaveOverlay();
             try {
                 const res = await fetch(`/Production2/MarkBasketDetailDone?basketId=${currentBasketId}&partsNo=${encodeURIComponent(partsNo)}`, {
                     method: 'POST',
@@ -197,15 +220,21 @@
                 const data = await res.json();
                 if (res.ok && data.success) {
                     showStatus(`✓ Đã nhận đủ ${partsNo}.`, false);
+                    window.PdaHelper.feedback(true, `Đã nhận đủ part ${partsNo}.`);
                     await findBasket(currentBasketId, true);
                 } else {
-                    showStatus(data.message || 'Không thể cập nhật.', true);
+                    const msg = data.message || 'Không thể cập nhật.';
+                    showStatus(msg, true);
+                    window.PdaHelper.feedback(false, msg);
                     btn.disabled = false;
                 }
             } catch (err) {
                 console.error(err);
                 showStatus('Lỗi kết nối máy chủ!', true);
+                window.PdaHelper.feedback(false, 'Lỗi kết nối máy chủ!');
                 btn.disabled = false;
+            } finally {
+                hideSaveOverlay();
             }
         }
 
@@ -244,11 +273,12 @@
         numpadCancel.addEventListener('click', closeNumpad);
 
         numpadSave.addEventListener('click', async function () {
-            if (!numpadContext || numpadSave.disabled) return;
+            if (!numpadContext || numpadSave.disabled || isSaving) return;
             const qty = parseInt(numpadDisplay.textContent, 10) || 0;
             const partsNo = numpadContext.partsNo; // lưu lại trước — closeNumpad() sẽ set numpadContext = null
 
             numpadSave.disabled = true;
+            showSaveOverlay();
             try {
                 const res = await fetch(`/Production2/UpdateBasketDetailQty?basketId=${currentBasketId}&partsNo=${encodeURIComponent(partsNo)}&qty=${qty}`, {
                     method: 'POST',
@@ -258,15 +288,20 @@
                 if (res.ok && data.success) {
                     closeNumpad();
                     showStatus(`✓ Đã cập nhật ${partsNo} = ${qty}.`, false);
+                    window.PdaHelper.feedback(true, `Đã cập nhật ${partsNo} = ${qty}.`);
                     await findBasket(currentBasketId, true);
                 } else {
-                    numpadError.textContent = data.message || 'Không thể cập nhật.';
+                    const msg = data.message || 'Không thể cập nhật.';
+                    numpadError.textContent = msg;
+                    window.PdaHelper.feedback(false, msg);
                 }
             } catch (err) {
                 console.error(err);
                 numpadError.textContent = 'Lỗi kết nối máy chủ!';
+                window.PdaHelper.feedback(false, 'Lỗi kết nối máy chủ!');
             } finally {
                 numpadSave.disabled = false;
+                hideSaveOverlay();
             }
         });
 

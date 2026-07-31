@@ -73,6 +73,20 @@
     .numpad-grid button { min-height: 56px; font-size: 1.3rem; font-weight: 700; border-radius: 10px; border: 1px solid #e9ecef; background: #f8f9fa; color: #344767; }
     .numpad-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
     .numpad-actions button { flex: 1; min-height: 48px; font-weight: 700; border-radius: 10px; border: none; }
+
+    #saveLoadingOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(255,255,255,0.55);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    #saveLoadingOverlay.show { display: flex; }
+    #saveLoadingOverlay .spinner-border { width: 3rem; height: 3rem; }
 </style>
 
 <div class="row">
@@ -178,9 +192,15 @@
     </div>
 </div>
 
+<div id="saveLoadingOverlay">
+    <div class="spinner-border text-warning" role="status"></div>
+    <div class="text-dark font-weight-bold">Đang lưu...</div>
+</div>
+
 @section Scripts {
     <script>
         window.pending2Config = { initialBasketId: @Html.Raw(basketId.HasValue ? basketId.Value.ToString() : "null") };
     </script>
+    <script src="~/assets/js/global-function.js" asp-append-version="true"></script>
     <script src="~/js/pages/production2-pending2.js" asp-append-version="true"></script>
 }

@@ -175,6 +175,16 @@ public class Production2Controller : Controller
         return View();
     }
 
+    // ============================================================
+    // 7. KIỂM TRA PENDING — quét mã PCard bằng máy quét cầm tay để tra nhanh
+    // basket tương ứng còn chưa nhận đủ hay không (nhảy sang Pending2?basketId=...)
+    // ============================================================
+    [HttpGet]
+    public IActionResult CheckPending()
+    {
+        return View();
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetBasketIdByCard([FromQuery] string cardNo)
     {

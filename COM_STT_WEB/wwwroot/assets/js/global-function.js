@@ -131,10 +131,10 @@ window.PdaHelper = (function () {
                 ? 'linear-gradient(195deg, #2dce89, #1aaf6c)' 
                 : 'linear-gradient(195deg, #f5365c, #c0392b)';
 
-            const icon = success ? 'check_circle' : 'error';
+            const icon = success ? '✅' : '❌';
             toastEl.innerHTML = `
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <span class="material-symbols-rounded" style="font-size:28px;">${icon}</span>
+                    <span style="font-size:28px;">${icon}</span>
                     <div style="flex:1;">
                         <div style="font-size:1rem; font-weight:800;">${title}</div>
                         <div style="font-size:0.85rem; opacity:0.9;">${message}</div>
