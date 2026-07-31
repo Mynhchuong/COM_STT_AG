@@ -19,6 +19,12 @@ public class ReportController : Controller
         return View();
     }
 
+    // Báo cáo theo PO — dựa trên MES.V_COMPSTT_PO_REPORT (Part No cố định 190 trong view).
+    public IActionResult ByPo()
+    {
+        return View();
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetCompSttSetReport([FromQuery] string fromDate, [FromQuery] string toDate, [FromQuery] string? po, [FromQuery] string? part)
     {
@@ -28,6 +34,18 @@ public class ReportController : Controller
         }
 
         var rows = await _apiService.GetCompSttSetReportAsync(fromDate, toDate, po, part);
+        return Ok(new { success = true, data = rows });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCompSttPoReport([FromQuery] string po)
+    {
+        if (string.IsNullOrWhiteSpace(po))
+        {
+            return BadRequest(new { success = false, message = "Vui lòng nhập số PO." });
+        }
+
+        var rows = await _apiService.GetCompSttPoReportAsync(po.Trim());
         return Ok(new { success = true, data = rows });
     }
 }

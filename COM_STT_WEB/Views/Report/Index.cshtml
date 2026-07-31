@@ -85,9 +85,14 @@
                         <h5 class="text-white font-weight-bolder mb-0">BÁO CÁO — KẾ HOẠCH / ĐÃ SET / CÒN LẠI</h5>
                     </div>
                 </div>
-                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
-                    🏠 Trang chủ
-                </a>
+                <div class="d-flex align-items-center gap-2">
+                    <a asp-action="ByPo" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
+                        📄 Báo cáo theo PO
+                    </a>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
+                        🏠 Trang chủ
+                    </a>
+                </div>
             </div>
         </div>
     </div>

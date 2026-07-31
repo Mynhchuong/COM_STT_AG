@@ -21,6 +21,13 @@ public class ReportApiService
             "api/report/compstt-set?" + string.Join("&", query));
         return response?.Data ?? new List<CompSttSetReportRowModel>();
     }
+
+    public async Task<List<CompSttPoReportRowModel>> GetCompSttPoReportAsync(string po)
+    {
+        var response = await _httpClient.GetFromJsonAsync<ReportApiResponse<List<CompSttPoReportRowModel>>>(
+            $"api/report/compstt-po?po={Uri.EscapeDataString(po)}");
+        return response?.Data ?? new List<CompSttPoReportRowModel>();
+    }
 }
 
 public class ReportApiResponse<T>
@@ -54,6 +61,30 @@ public class CompSttSetReportRowModel
 
     [JsonPropertyName("LINE_TYPE")]
     public string? LineType { get; set; }
+
+    [JsonPropertyName("SIZES")]
+    public Dictionary<string, int> Sizes { get; set; } = new();
+}
+
+public class CompSttPoReportRowModel
+{
+    [JsonPropertyName("I_PO_NO")]
+    public string? IPoNo { get; set; }
+
+    [JsonPropertyName("RW")]
+    public int Rw { get; set; }
+
+    [JsonPropertyName("LINE_TYPE")]
+    public string? LineType { get; set; }
+
+    [JsonPropertyName("I_PARTS_NO")]
+    public string? IPartsNo { get; set; }
+
+    [JsonPropertyName("N_PARTS_NO")]
+    public string? NPartsNo { get; set; }
+
+    [JsonPropertyName("LINE_NO")]
+    public int LineNo { get; set; }
 
     [JsonPropertyName("SIZES")]
     public Dictionary<string, int> Sizes { get; set; } = new();

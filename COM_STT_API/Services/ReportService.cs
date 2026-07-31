@@ -84,6 +84,40 @@ public class ReportService
         return await _db.ExecuteQueryAsync(sql, MapRow, parameters.ToArray());
     }
 
+    // Báo cáo theo PO — dựa trên MES.V_COMPSTT_PO_REPORT (Part No cố định '190' đã bake sẵn
+    // trong view). Chỉ lọc theo I_PO_NO = bind exact-match (không LIKE), đã test 158ms cho 1 PO.
+    public async Task<List<CompSttPoReportRow>> GetCompSttPoReportAsync(string po)
+    {
+        const string sql = @"
+            SELECT * FROM MES.V_COMPSTT_PO_REPORT
+            WHERE I_PO_NO = :po
+            ORDER BY RW, I_PARTS_NO, LINE_TYPE";
+
+        return await _db.ExecuteQueryAsync(sql, MapPoReportRow, new OracleParameter("po", po));
+    }
+
+    private static CompSttPoReportRow MapPoReportRow(OracleDataReader r)
+    {
+        var row = new CompSttPoReportRow
+        {
+            IPoNo = r["I_PO_NO"] as string,
+            Rw = Convert.ToInt32(r["RW"]),
+            LineType = (r["LINE_TYPE"] as string)?.Trim(),
+            IPartsNo = r["I_PARTS_NO"] as string,
+            NPartsNo = r["N_PARTS_NO"] as string,
+            LineNo = Convert.ToInt32(r["LINE_NO"])
+        };
+
+        foreach (var size in YieldService.SizeCodes)
+        {
+            var col = "SIZE_" + size;
+            var val = r[col];
+            row.Sizes[size] = val == DBNull.Value ? 0 : Convert.ToInt32(val);
+        }
+
+        return row;
+    }
+
     private static CompSttSetReportRow MapRow(OracleDataReader r)
     {
         var row = new CompSttSetReportRow

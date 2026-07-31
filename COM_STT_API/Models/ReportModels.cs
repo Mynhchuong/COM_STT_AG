@@ -27,3 +27,29 @@ public class CompSttSetReportRow
     [JsonPropertyName("SIZES")]
     public Dictionary<string, int> Sizes { get; set; } = new();
 }
+
+// 1 dòng trong báo cáo theo PO (RW 1-4: TTL_PLAN / TOTAL SCAN QTY / RECEIVED_QTY / BALANCE_QTY),
+// dựa trên MES.V_COMPSTT_PO_REPORT — Part No cố định '190' đã bake sẵn trong view.
+public class CompSttPoReportRow
+{
+    [JsonPropertyName("I_PO_NO")]
+    public string? IPoNo { get; set; }
+
+    [JsonPropertyName("RW")]
+    public int Rw { get; set; }
+
+    [JsonPropertyName("LINE_TYPE")]
+    public string? LineType { get; set; }
+
+    [JsonPropertyName("I_PARTS_NO")]
+    public string? IPartsNo { get; set; }
+
+    [JsonPropertyName("N_PARTS_NO")]
+    public string? NPartsNo { get; set; }
+
+    [JsonPropertyName("LINE_NO")]
+    public int LineNo { get; set; }
+
+    [JsonPropertyName("SIZES")]
+    public Dictionary<string, int> Sizes { get; set; } = new();
+}

@@ -1,0 +1,181 @@
+@{
+    ViewData["Title"] = "Báo cáo theo PO - Sản xuất";
+}
+
+<style>
+    .pivot-table-wrap {
+        overflow: auto;
+        max-height: 72vh;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+    }
+
+    #pivotTable {
+        border-collapse: separate;
+        border-spacing: 0;
+        white-space: nowrap;
+        font-size: 0.82rem;
+    }
+
+    #pivotTable th,
+    #pivotTable td {
+        padding: 0.4rem 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-right: 1px solid #f1f3f5;
+        text-align: right;
+        min-width: 44px;
+    }
+    #pivotTable td.size-col-zero { color: #adb5bd; }
+
+    #pivotTable thead th {
+        position: sticky;
+        top: 0;
+        background: #344767;
+        color: #fff;
+        z-index: 3;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    #pivotTable th.meta-col,
+    #pivotTable td.meta-col,
+    #pivotTable th.total-col,
+    #pivotTable td.total-col {
+        position: sticky;
+        background: #fff;
+        z-index: 2;
+        font-weight: 700;
+    }
+    #pivotTable th.meta-col { text-align: left; }
+    #pivotTable thead th.meta-col,
+    #pivotTable thead th.total-col {
+        z-index: 4;
+        background: #344767;
+    }
+
+    #pivotTable .col-part-no   { left: 0px;   width: 90px;  min-width: 90px;  max-width: 90px; }
+    #pivotTable .col-part-name { left: 90px;  width: 220px; min-width: 220px; max-width: 220px; text-align: left; }
+    #pivotTable .col-line-type { left: 310px; width: 130px; min-width: 130px; max-width: 130px; }
+    #pivotTable .col-total     { left: 440px; width: 80px;  min-width: 80px;  max-width: 80px; }
+
+    /* RECEIVED_QTY và BALANCE_QTY: 2 dải màu nền ngang khác nhau để phân biệt rõ 2 khối */
+    #pivotTable tr.row-plan td { background: rgba(52, 71, 103, 0.08); font-weight: 800; border-top: 2px solid #344767; }
+    #pivotTable tr.row-scan td { background: rgba(26, 115, 232, 0.06); font-weight: 800; }
+    #pivotTable tr.row-received td { background: rgba(45, 206, 137, 0.06); }
+    #pivotTable tr.row-balance td { background: rgba(245, 54, 92, 0.05); }
+
+    /* Highlight số liệu khác 0 cho dễ nhìn — cả ĐÃ NHẬN lẫn CÒN THIẾU */
+    #pivotTable tr.row-received td.nonzero { color: #2dce89; font-weight: 800; }
+    #pivotTable tr.row-balance td.zero { color: #2dce89; font-weight: 800; }
+    /* CÒN THIẾU: 2 mức độ — thiếu ít (vàng cam) / thiếu nhiều (đỏ), ngưỡng = 30% kế hoạch của size đó */
+    #pivotTable tr.row-balance td.short-minor { color: #fb6340; font-weight: 800; background: rgba(251, 99, 64, 0.12); }
+    #pivotTable tr.row-balance td.short-major { color: #f5365c; font-weight: 800; background: rgba(245, 54, 92, 0.14); }
+
+    #pivotTable td.total-col,
+    #pivotTable th.total-col {
+        border-right: 2px solid #344767;
+        font-weight: 800;
+    }
+
+    /* Thẻ tổng quan (PO / Tổng plan / Tổng quét / Đã nhận / Còn thiếu) */
+    .summary-card {
+        border-radius: 16px;
+        padding: 1.1rem 1.3rem;
+        background: #212529;
+        color: #fff;
+    }
+    .summary-card .summary-label { font-size: 0.78rem; color: #adb5bd; font-weight: 700; letter-spacing: 0.3px; }
+    .summary-card .summary-value { font-size: 1.8rem; font-weight: 800; margin-top: 0.15rem; }
+    .summary-card.summary-plan .summary-value { color: #fff; }
+    .summary-card.summary-scan .summary-value { color: #5e9eff; }
+    .summary-card.summary-received .summary-value { color: #2dce89; }
+    .summary-card.summary-balance .summary-value { color: #f5365c; }
+
+    .legend-dot { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:middle; }
+</style>
+
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="card bg-gradient-info border-radius-lg text-white">
+            <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon icon-shape bg-white text-info shadow border-radius-md d-flex align-items-center justify-content-center">
+                        📄
+                    </div>
+                    <div>
+                        <h5 class="text-white font-weight-bolder mb-0">BÁO CÁO THEO PO</h5>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
+                        ⬅️ Báo cáo
+                    </a>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
+                        🏠 Trang chủ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 mb-3">
+        <div class="card border-radius-lg">
+            <div class="card-body p-3 d-flex flex-wrap align-items-end gap-2">
+                <div>
+                    <label for="poInput" class="text-xs font-weight-bolder text-dark mb-1 d-block">Order (PO)</label>
+                    <input type="text" id="poInput" class="form-control" placeholder="VD: 414271" autocomplete="off" style="min-height:44px; max-width:200px;" />
+                </div>
+                <button type="button" id="btnFindReport" class="btn bg-gradient-info mb-0 px-4 d-flex align-items-center gap-1" style="min-height:44px;">
+                    🔍 Tìm
+                </button>
+                <span id="reportStatus" class="text-sm text-secondary ms-2"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 mb-3" id="summaryRow" style="display:none;">
+        <div class="row g-3">
+            <div class="col">
+                <div class="summary-card summary-plan">
+                    <div class="summary-label">PO</div>
+                    <div class="summary-value" id="sumPo">-</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="summary-card summary-plan">
+                    <div class="summary-label">TỔNG PLAN</div>
+                    <div class="summary-value" id="sumPlan">0</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="summary-card summary-scan">
+                    <div class="summary-label">TỔNG ĐÃ QUÉT</div>
+                    <div class="summary-value" id="sumScan">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card border-radius-lg">
+            <div class="card-body p-3">
+                <div class="pivot-table-wrap">
+                    <table id="pivotTable" class="mb-0 w-100" style="display:none;">
+                        <thead>
+                            <tr id="pivotHeaderRow"></tr>
+                        </thead>
+                        <tbody id="pivotBody"></tbody>
+                    </table>
+                    <div id="pivotEmpty" class="text-center py-5 text-secondary text-sm">
+                        📊
+                        <p class="mb-0">Nhập số PO rồi bấm Tìm để xem báo cáo.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/report-po.js" asp-append-version="true"></script>
+}
