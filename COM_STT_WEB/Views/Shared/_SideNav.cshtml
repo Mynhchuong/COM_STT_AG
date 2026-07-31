@@ -102,7 +102,7 @@
 
 <!-- ===== SIDENAV HEADER ===== -->
 <div class="sidenav-header">
-    <i class="material-symbols-rounded p-3 cursor-pointer text-dark opacity-5 position-absolute end-0 top-0 d-xl-none" id="iconSidenav">close</i>
+    ✖️
 
     <a class="navbar-brand m-0 d-flex align-items-center px-1 py-2" asp-area="" asp-controller="Home" asp-action="Index">
         <img src="~/assets/img/logowebsmTO.png" class="navbar-brand-img" style="max-height:32px;" alt="COM STT" />
@@ -115,8 +115,7 @@
 <!-- ===== SEARCH ===== -->
 <div class="px-3 pb-2">
     <div style="position:relative;">
-        <i class="material-symbols-rounded"
-           style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:1.05rem;color:#94a3b8;pointer-events:none;">search</i>
+        🔍
         <input type="text" id="sidenavSearch" placeholder="Tìm chức năng..."
                autocomplete="off"
                style="width:100%;height:38px;border:1.5px solid #e2e8f0;border-radius:12px;
@@ -146,12 +145,12 @@
 
                     <span class="d-flex align-items-center">
                         <span class="menu-icon-shell">
-                            <i class="material-symbols-rounded">@menu.Icon</i>
+                            <span>@menu.Icon</span>
                         </span>
                         <span class="nav-link-text">@menu.Title</span>
                     </span>
 
-                    <i class="material-symbols-rounded">expand_more</i>
+                    🔽
                 </a>
 
                 <div class="collapse ps-3 @(open ? "show" : "")" id="@menu.Id">
@@ -165,7 +164,7 @@
                                 <a class="nav-link text-dark rounded px-2 py-1 @(active ? "active fw-bold bg-light" : "")"
                                    href="@Url.Content(item.Url ?? "#")">
                                     <span class="menu-child-icon">
-                                        <i class="material-symbols-rounded">@item.Icon</i>
+                                        <span>@item.Icon</span>
                                     </span>
                                     <span class="nav-link-text">@item.Title</span>
                                 </a>

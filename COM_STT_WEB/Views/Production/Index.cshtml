@@ -92,7 +92,7 @@
                 <div class="bg-gradient-primary shadow-primary border-radius-lg pt-3 pb-3 pe-3 ps-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
                     <div class="d-flex align-items-center gap-2">
                         <div class="icon icon-shape icon-md bg-white shadow text-center border-radius-md d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="material-symbols-rounded text-primary" style="font-size:1.6rem;">precision_manufacturing</i>
+                            🏭
                         </div>
                         <div>
                             <h6 class="text-white text-capitalize ps-1 mb-0 font-weight-bold">Quản lý đợt kiểm lỗi sản xuất</h6>
@@ -101,10 +101,10 @@
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <a asp-action="Create" class="btn bg-gradient-dark mb-0 d-flex align-items-center justify-content-center gap-2 py-3 px-4" style="border-radius:12px; font-weight:800; font-size:0.95rem;">
-                            <i class="material-symbols-rounded" style="font-size:22px;">add_circle</i>ĐĂNG KÝ MỚI
+                            ➕ ĐĂNG KÝ MỚI
                         </a>
                         <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white mb-0 d-flex align-items-center justify-content-center p-0 flex-shrink-0" style="width:48px; height:48px; border-radius:12px;" title="Về trang chủ">
-                            <i class="material-symbols-rounded" style="font-size:22px;">home</i>
+                            🏠
                         </a>
                     </div>
                 </div>
@@ -149,7 +149,7 @@
                         </div>
                         <div class="col-12 col-md-4 col-lg-2">
                             <button type="submit" class="btn bg-gradient-primary w-100 mb-0 d-inline-flex align-items-center justify-content-center gap-1 font-weight-bold" style="min-height:52px; border-radius:14px; font-size:1rem;">
-                                <i class="material-symbols-rounded">filter_list</i>LỌC DỮ LIỆU
+                                🧰 LỌC DỮ LIỆU
                             </button>
                         </div>
                     </div>
@@ -265,22 +265,22 @@
                                                 @if (b.Status == "N")
                                                 {
                                                     <a asp-action="Scan" asp-route-seq="@b.Seq" class="btn btn-sm bg-gradient-success mb-0 d-inline-flex align-items-center gap-1 py-2 px-3" title="Vào quét PCard">
-                                                        <i class="material-symbols-rounded text-sm">qr_code_scanner</i>Quét PCard
+                                                        📷 Quét PCard
                                                     </a>
                                                     <a asp-action="Edit" asp-route-seq="@b.Seq" class="btn btn-sm btn-outline-dark mb-0 d-inline-flex align-items-center gap-1 py-2 px-3" title="Chỉnh sửa thông tin">
-                                                        <i class="material-symbols-rounded text-sm">edit</i>Sửa
+                                                        ✏️ Sửa
                                                     </a>
                                                     <form asp-action="Finish" asp-route-seq="@b.Seq" method="post" onsubmit="return confirm('Xác nhận hoàn tất đợt quét sản xuất này? Không thể sửa/quét thêm sau khi hoàn tất.');" class="d-inline">
                                                         @Html.AntiForgeryToken()
                                                         <button type="submit" class="btn btn-sm bg-gradient-danger mb-0 d-inline-flex align-items-center gap-1 py-2 px-3" title="Hoàn tất đợt">
-                                                            <i class="material-symbols-rounded text-sm">check_circle</i>Hoàn tất
+                                                            ✅ Hoàn tất
                                                         </button>
                                                     </form>
                                                 }
                                                 else
                                                 {
                                                     <a asp-action="Scan" asp-route-seq="@b.Seq" class="btn btn-sm btn-outline-secondary mb-0 d-inline-flex align-items-center gap-1 py-2 px-3" title="Xem danh sách PCard">
-                                                        <i class="material-symbols-rounded text-sm">visibility</i>Xem PCard
+                                                        👁️ Xem PCard
                                                     </a>
                                                 }
                                             </div>
@@ -329,7 +329,7 @@
 
                                 <!-- Máy & Thời gian -->
                                 <div class="text-xs text-secondary mb-2">
-                                    Mã máy: <strong class="text-dark">@(string.IsNullOrEmpty(b.MachineCode) ? "N/A" : b.MachineCode)</strong> · <i class="material-symbols-rounded" style="font-size:14px; vertical-align:-2px;">schedule</i> @FormatDGather(b.DGather)
+                                    Mã máy: <strong class="text-dark">@(string.IsNullOrEmpty(b.MachineCode) ? "N/A" : b.MachineCode)</strong> · 🕒 @FormatDGather(b.DGather)
                                 </div>
 
                                 <!-- Styles / Orders -->
@@ -358,16 +358,16 @@
                                         @if (!isDone)
                                         {
                                             <a asp-action="Scan" asp-route-seq="@b.Seq" class="btn btn-success mb-0 px-3 py-2 d-flex align-items-center gap-1 font-weight-bold" style="border-radius:12px; font-size:0.85rem;">
-                                                <i class="material-symbols-rounded" style="font-size:18px;">qr_code_scanner</i>QUÉT PCARD
+                                                📷 QUÉT PCARD
                                             </a>
                                             <a asp-action="Edit" asp-route-seq="@b.Seq" class="btn btn-outline-dark mb-0 px-2 py-2 d-flex align-items-center justify-content-center" style="border-radius:12px;" title="Sửa">
-                                                <i class="material-symbols-rounded" style="font-size:18px;">edit</i>
+                                                ✏️
                                             </a>
                                         }
                                         else
                                         {
                                             <a asp-action="Scan" asp-route-seq="@b.Seq" class="btn btn-outline-secondary mb-0 px-3 py-2 d-flex align-items-center gap-1" style="border-radius:12px; font-size:0.85rem;">
-                                                <i class="material-symbols-rounded" style="font-size:18px;">visibility</i>XEM
+                                                👁️ XEM
                                             </a>
                                         }
                                     </div>

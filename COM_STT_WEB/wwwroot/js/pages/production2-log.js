@@ -32,7 +32,7 @@
         function renderEmpty(message) {
             logListContainer.innerHTML = `
                 <div class="text-center py-5 text-secondary text-sm">
-                    <i class="material-symbols-rounded text-secondary text-4xl mb-2">inbox</i>
+                    📥
                     <p class="mb-0">${message}</p>
                 </div>`;
             paginationBar.classList.add('d-none');
@@ -75,7 +75,7 @@
                         </div>
                         <div>
                             <button type="button" class="btn btn-link text-danger p-2 mb-0 btn-delete-log" data-dgather="${item.D_GATHER}" aria-label="Xoá">
-                                <i class="material-symbols-rounded">delete_outline</i>
+                                🗑️
                             </button>
                         </div>
                     </div>`;

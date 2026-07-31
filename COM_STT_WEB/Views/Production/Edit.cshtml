@@ -57,7 +57,7 @@
                                 <input type="text" id="machineInput" placeholder="Nhập hoặc quét mã máy rồi ấn Enter" class="form-control form-control-lg text-lg" autocomplete="off" />
                             </div>
                             <button type="button" id="btnAddMachine" class="btn btn-outline-primary mb-0 px-3 d-flex align-items-center justify-content-center">
-                                <i class="material-symbols-rounded">add_circle</i>
+                                ➕
                             </button>
                         </div>
                         <input type="hidden" asp-for="MachineCode" id="hiddenMachineCode" />
@@ -81,10 +81,10 @@
                     <!-- ACTION BUTTONS -->
                     <div class="text-center mt-5 d-flex gap-3 justify-content-center">
                         <a asp-action="Index" class="btn btn-lg btn-outline-secondary mb-0 w-45 py-3 text-md">
-                            <i class="material-symbols-rounded align-middle me-1">arrow_back</i>Hủy bỏ
+                            ⬅️Hủy bỏ
                         </a>
                         <button type="submit" class="btn btn-lg bg-gradient-primary mb-0 w-45 py-3 text-md d-flex align-items-center justify-content-center gap-1">
-                            <i class="material-symbols-rounded">save</i>Cập nhật
+                            💾Cập nhật
                         </button>
                     </div>
                 </form>
@@ -176,7 +176,7 @@
                 machineList.forEach(function (code) {
                     const tag = document.createElement('span');
                     tag.className = 'badge bg-gradient-primary d-inline-flex align-items-center gap-1 py-2 px-3 text-sm border-radius-lg shadow';
-                    tag.innerHTML = code + ' <i class="material-symbols-rounded cursor-pointer ms-1 text-xs" style="font-size:14px;" data-code="' + code + '">close</i>';
+                    tag.innerHTML = code + ' ✖️';
                     
                     tag.querySelector('i').addEventListener('click', function () {
                         removeMachineCode(code);

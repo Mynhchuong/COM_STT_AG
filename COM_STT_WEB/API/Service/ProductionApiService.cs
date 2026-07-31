@@ -128,7 +128,8 @@ public class ProductionApiService
             Count = body?.SavedCount ?? 0,
             Message = body?.Message,
             PartYieldMessage = body?.PartYieldMessage,
-            BasketId = body?.BasketId
+            BasketId = body?.BasketId,
+            OutputErrors = body?.OutputErrors
         };
     }
 
@@ -437,6 +438,9 @@ public class SaveYieldBatchApiResponse
 
     [JsonPropertyName("basketId")]
     public int? BasketId { get; set; }
+
+    [JsonPropertyName("outputErrors")]
+    public List<string>? OutputErrors { get; set; }
 }
 
 public class SaveYieldBatchResult
@@ -446,6 +450,7 @@ public class SaveYieldBatchResult
     public string? Message { get; set; }
     public string? PartYieldMessage { get; set; }
     public int? BasketId { get; set; }
+    public List<string>? OutputErrors { get; set; }
 }
 
 public class RoutingExistsApiResponse

@@ -12,7 +12,7 @@ public class QcController : Controller
         return View("~/Views/Shared/ComingSoon.cshtml", new ComingSoonViewModel
         {
             Title = "QC",
-            Icon = "verified",
+            Icon = "✔️",
             GradientClass = "bg-gradient-success"
         });
     }

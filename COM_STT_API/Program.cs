@@ -18,6 +18,7 @@ builder.Services.AddScoped<ProdPlanService>();
 builder.Services.AddScoped<InspectionHeadService>();
 builder.Services.AddScoped<YieldService>();
 builder.Services.AddScoped<CompSttSetService>();
+builder.Services.AddScoped<ReportService>();
 
 var app = builder.Build();
 

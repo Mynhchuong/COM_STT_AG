@@ -98,7 +98,7 @@
                     pivotTable.style.display = 'none';
                     pivotEmpty.style.display = 'block';
                     pivotEmpty.innerHTML = `
-                        <i class="material-symbols-rounded text-secondary text-4xl mb-2">search_off</i>
+                        🚫
                         <p class="mb-0">Không tìm thấy dữ liệu cho Order ${ordNo}.</p>`;
                     showStatus(data.message || 'Không có dữ liệu.', true);
                 }

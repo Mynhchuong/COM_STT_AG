@@ -122,11 +122,11 @@
             if (isLocked) {
                 btnComplete.classList.remove('d-none');
                 btnComplete.disabled = true;
-                btnComplete.innerHTML = '<i class="material-symbols-rounded">verified</i>Đã hoàn tất';
+                btnComplete.innerHTML = '✔️Đã hoàn tất';
             } else if (allDone) {
                 btnComplete.classList.remove('d-none');
                 btnComplete.disabled = false;
-                btnComplete.innerHTML = '<i class="material-symbols-rounded">check_circle</i>Hoàn tất';
+                btnComplete.innerHTML = '✅Hoàn tất';
             } else {
                 btnComplete.classList.add('d-none');
             }
@@ -285,7 +285,7 @@
                     pivotTable.style.display = 'none';
                     pivotEmpty.style.display = 'block';
                     pivotEmpty.innerHTML = `
-                        <i class="material-symbols-rounded text-secondary text-4xl mb-2">search_off</i>
+                        🚫
                         <p class="mb-0">Chưa có dữ liệu Set In cho Order ${ordNo}.</p>`;
                     showStatus(data.message || 'Không có dữ liệu.', true);
                     btnComplete.classList.add('d-none');

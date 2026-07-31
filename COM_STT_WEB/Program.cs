@@ -20,6 +20,13 @@ builder.Services.AddHttpClient<ProductionApiService>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+builder.Services.AddHttpClient<ReportApiService>(client =>
+{
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"]
+                  ?? throw new InvalidOperationException("ApiSettings:BaseUrl not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 builder.Services.AddAntiforgery(options =>
 {
     // Cho phép JS gửi token qua header khi gọi fetch() từ các trang JSON (VD: Production/Scan)

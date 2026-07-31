@@ -101,7 +101,7 @@ public class Production2Controller : Controller
             return StatusCode(500, new { success = false, message = result.Message ?? "Lỗi khi lưu danh sách vào TRTB_M_KEYIN_YIELD" });
         }
 
-        return Ok(new { success = true, count = result.Count, ordNo = distinctOrders.FirstOrDefault(), partYieldMessage = result.PartYieldMessage, basketId = result.BasketId });
+        return Ok(new { success = true, count = result.Count, ordNo = distinctOrders.FirstOrDefault(), partYieldMessage = result.PartYieldMessage, basketId = result.BasketId, outputErrors = result.OutputErrors });
     }
 
     // ============================================================

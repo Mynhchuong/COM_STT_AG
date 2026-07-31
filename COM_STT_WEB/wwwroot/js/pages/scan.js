@@ -78,11 +78,11 @@
             li.dataset.code = code;
             li.innerHTML =
                 '<span class="d-flex align-items-center gap-2">' +
-                '<i class="material-symbols-rounded text-success" aria-hidden="true">check_circle</i>' +
+                '✅' +
                 '<span>' + code + '</span>' +
                 '</span>' +
                 '<button type="button" class="btn btn-link text-danger p-0 btn-remove" aria-label="Xoá">' +
-                '<i class="material-symbols-rounded" aria-hidden="true">close</i>' +
+                '✖️' +
                 '</button>';
             li.querySelector('.btn-remove').addEventListener('click', function () {
                 removeCode(code);
@@ -264,7 +264,7 @@
             scannedCodes.forEach(function (code) {
                 var li = document.createElement('li');
                 li.className = 'list-group-item d-flex align-items-center gap-2';
-                li.innerHTML = '<i class="material-symbols-rounded text-success" aria-hidden="true">inventory_2</i><span>' + code + '</span>';
+                li.innerHTML = '📦<span>' + code + '</span>';
                 summaryList.appendChild(li);
             });
             showSection(summarySection);

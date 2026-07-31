@@ -81,7 +81,7 @@
             <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <div class="d-flex align-items-center gap-3">
                     <div class="icon icon-shape bg-white text-warning shadow border-radius-md d-flex align-items-center justify-content-center">
-                        <i class="material-symbols-rounded" style="font-size:1.8rem;">pending_actions</i>
+                        ⏳
                     </div>
                     <div>
                         <h5 class="text-white font-weight-bolder mb-0">CHỜ SET IN (v2)</h5>
@@ -89,10 +89,10 @@
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
-                        <i class="material-symbols-rounded">home</i>Trang chủ
+                        🏠 Trang chủ
                     </a>
                     <a asp-action="SetIn" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
-                        <i class="material-symbols-rounded">qr_code_scanner</i>Set In
+                        📷 Set In
                     </a>
                 </div>
             </div>
@@ -109,7 +109,7 @@
                 <label class="text-xs font-weight-bolder text-dark mb-0 ms-2">hoặc mã PCard:</label>
                 <input type="text" id="cardNoInput" class="form-control" placeholder="VD: PAB6714002494" autocomplete="off" style="max-width:200px; min-height:38px; text-transform:uppercase;" />
                 <button type="button" id="btnFindBasket" class="btn bg-gradient-warning mb-0 px-3 d-flex align-items-center gap-1" style="min-height:38px;">
-                    <i class="material-symbols-rounded">search</i>Tìm
+                    🔍 Tìm
                 </button>
                 <span id="basketStatus" class="text-sm text-secondary ms-2"></span>
             </div>
@@ -143,7 +143,7 @@
                         <tbody id="detailBody"></tbody>
                     </table>
                     <div id="detailEmpty" class="text-center py-5 text-secondary text-sm">
-                        <i class="material-symbols-rounded text-secondary text-4xl mb-2">table_chart</i>
+                        📊
                         <p class="mb-0">Nhập Basket ID hoặc quét/nhập mã PCard rồi bấm Tìm.</p>
                     </div>
                 </div>

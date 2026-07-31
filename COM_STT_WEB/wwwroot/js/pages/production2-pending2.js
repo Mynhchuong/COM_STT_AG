@@ -72,7 +72,7 @@
                 detailTable.style.display = 'none';
                 detailEmpty.style.display = 'block';
                 detailEmpty.innerHTML = `
-                    <i class="material-symbols-rounded text-secondary text-4xl mb-2">search_off</i>
+                    🚫
                     <p class="mb-0">Basket này chưa có dữ liệu part.</p>`;
                 return;
             }

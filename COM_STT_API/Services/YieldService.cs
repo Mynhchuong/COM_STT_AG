@@ -15,9 +15,9 @@ public class YieldService
         _compSttSetService = compSttSetService;
     }
 
-    public async Task<(int Count, string? PartYieldMessage, int? BasketId)> SaveYieldBatchAsync(List<KeyinYieldItemDto> items)
+    public async Task<(int Count, string? PartYieldMessage, int? BasketId, List<string> OutputErrors)> SaveYieldBatchAsync(List<KeyinYieldItemDto> items)
     {
-        if (items == null || !items.Any()) return (0, null, null);
+        if (items == null || !items.Any()) return (0, null, null, new List<string>());
 
         const string sql = @"
             INSERT INTO MES.TRTB_M_KEYIN_YIELD (
@@ -30,6 +30,7 @@ public class YieldService
 
         int count = 0;
         var now = DateTime.Now;
+        var outputErrors = new List<string>();
 
         // Chặn trùng NGAY TRONG 1 lần bấm Lưu (VD: gửi lại do lỗi mạng khiến batch bị trùng) —
         // không đụng tới các thẻ hợp lệ khác nhau đã lưu ở NHỮNG LẦN quét/lưu trước đó, vì
@@ -49,6 +50,18 @@ public class YieldService
             if (!seenInBatch.Add(dedupKey))
             {
                 continue; // dòng này trùng y hệt 1 dòng khác đã xử lý trong cùng batch — bỏ qua
+            }
+
+            // Set Out (OUTPUT): chỉ cho lưu khi basket của thẻ này đã đủ SET (C_QTY = SET_QTY).
+            // Không đạt thì bỏ qua thẻ này (không insert YIELD, không đánh dấu IS_OUT), báo lỗi rõ.
+            if (string.Equals(item.CAction, "OUTPUT", StringComparison.OrdinalIgnoreCase))
+            {
+                var (canOut, outMessage) = await _compSttSetService.TryMarkCardOutAsync(item.PcardNo ?? string.Empty);
+                if (!canOut)
+                {
+                    outputErrors.Add(outMessage ?? $"PCard {item.PcardNo}: không thể Set Out.");
+                    continue;
+                }
             }
 
             // Tăng nhẹ 1 giây giữa các dòng nếu cần để đảm bảo tính duy nhất của D_GATHER nếu trùng toàn bộ các cột khác
@@ -100,10 +113,10 @@ public class YieldService
             }
         }
 
-        return (count, partYieldMessage, basketId);
+        return (count, partYieldMessage, basketId, outputErrors);
     }
 
-    // Tạo SET cho 1 hoặc 2 PCard vừa Set In vào TRTB_M_KEYIN_PART_YIELD qua thủ tục có sẵn.
+    // Tạo SET cho 1 hoặc 2 PCard vừa Set In vào TRTB_M_COMPSTT_SET_HEADER/DETAIL qua thủ tục có sẵn.
     private async Task<string?> CreateCompSttSetAsync(string? cardNo1, string? cardNo2, string? workerId)
     {
         var resultParam = new OracleParameter("p_result", OracleDbType.Varchar2, 4000)

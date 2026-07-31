@@ -145,7 +145,7 @@
             <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <div class="d-flex align-items-center gap-3">
                     <div class="icon icon-shape bg-white text-info shadow border-radius-md d-flex align-items-center justify-content-center">
-                        <i class="material-symbols-rounded" style="font-size:1.8rem;">logout</i>
+                        🚪
                     </div>
                     <div>
                         <h5 class="text-white font-weight-bolder mb-0">SET OUT — Ra Chuyền</h5>
@@ -153,10 +153,10 @@
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
-                        <i class="material-symbols-rounded">home</i>Trang chủ
+                        🏠 Trang chủ
                     </a>
                     <a asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
-                        <i class="material-symbols-rounded">arrow_back</i>Set In/Out
+                        ⬅️ Set In/Out
                     </a>
                 </div>
             </div>
@@ -168,7 +168,7 @@
         <div class="card border-radius-lg">
             <div class="card-header pb-0 ps-3 pt-3">
                 <h6 class="mb-0 text-sm font-weight-bolder d-flex align-items-center gap-2">
-                    <i class="material-symbols-rounded text-primary">qr_code_scanner</i>
+                    📷
                     Quét Mã PCard (Camera & Súng Bắn)
                 </h6>
                 <p class="text-xs text-secondary mb-0">Hỗ trợ camera thoại hoặc súng đọc mã vạch PDA</p>
@@ -178,10 +178,10 @@
                 <!-- 1. CHỨC NĂNG QUÉT CAMERA -->
                 <div class="mb-4">
                     <div id="idle-section" class="py-4 bg-light border-radius-lg border border-dashed border-2">
-                        <i class="material-symbols-rounded text-secondary text-5xl mb-2">photo_camera</i>
+                        📸
                         <p class="text-secondary text-xs mb-3">Bấm nút bên dưới để mở Camera quét mã vạch / QR</p>
                         <button id="btn-start-scan" type="button" class="btn bg-gradient-primary btn-lg px-4 py-3 mb-0 d-inline-flex align-items-center gap-2" style="border-radius:14px; min-height:56px; font-weight:800;">
-                            <i class="material-symbols-rounded text-xl">qr_code_scanner</i>BẮT ĐẦU QUÉT CAMERA
+                            📷 BẮT ĐẦU QUÉT CAMERA
                         </button>
                     </div>
 
@@ -191,7 +191,7 @@
                         </div>
                         <div class="d-flex justify-content-center gap-2 mt-3">
                             <button id="btn-stop-scan" type="button" class="btn btn-outline-danger mb-0 d-inline-flex align-items-center gap-1 px-4 py-2" style="border-radius:12px;">
-                                <i class="material-symbols-rounded">videocam_off</i>Tắt Camera
+                                📵 Tắt Camera
                             </button>
                         </div>
                     </div>
@@ -220,14 +220,14 @@
                     <div class="d-flex gap-2 mb-3">
                         <input type="text" id="pcardInput" class="form-control" placeholder="BẮN MÃ PCARD VÀO ĐÂY..." autocomplete="off" inputmode="text" />
                         <button type="button" id="btnAddManual" class="btn bg-gradient-dark mb-0 px-3 d-flex align-items-center justify-content-center">
-                            <i class="material-symbols-rounded" style="font-size:24px;">send</i>
+                            📤
                         </button>
                     </div>
                 </div>
 
                 <!-- CLEAR BATCH BUTTON -->
                 <button type="button" id="btnClearBatch" class="btn btn-outline-danger w-100 mb-0 d-flex align-items-center justify-content-center gap-1" style="border-radius:12px;">
-                    <i class="material-symbols-rounded">restart_alt</i>Xóa danh sách làm lại
+                    🔁 Xóa danh sách làm lại
                 </button>
             </div>
         </div>
@@ -239,7 +239,7 @@
             <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-center justify-content-between">
                 <div>
                     <h6 class="mb-0 text-sm font-weight-bolder d-flex align-items-center gap-2">
-                        <i class="material-symbols-rounded text-info">list_alt</i>
+                        📋
                         Danh sách PCard đã đọc (Hàng loạt)
                     </h6>
                 </div>
@@ -248,7 +248,7 @@
             <div class="card-body p-2 p-md-3">
                 <div id="scannedListContainer" style="max-height: 520px; overflow-y: auto;">
                     <div class="text-center py-5 text-secondary text-sm" id="emptyMsg">
-                        <i class="material-symbols-rounded text-secondary text-4xl mb-2">qr_code_2</i>
+                        🔲
                         <p class="mb-0">Chưa đọc mã PCard nào. Bấm nút Mở Camera hoặc dùng súng bắn vạch!</p>
                     </div>
                 </div>
@@ -262,7 +262,7 @@
 <!-- BAR CỐ ĐỊNH NÚT LƯU Ở ĐÁY MÀN HÌNH -->
 <div class="sticky-save-bar my-3">
     <button type="button" id="btnSaveSetOut" class="btn bg-gradient-info w-100 mb-0 d-flex align-items-center justify-content-center gap-2">
-        <i class="material-symbols-rounded" style="font-size:26px;">save</i>
+        💾
         <span id="btnSaveText">LƯU DỮ LIỆU SET OUT</span>
     </button>
 </div>
@@ -453,7 +453,7 @@
             if (scannedList.length === 0) {
                 listContainer.innerHTML = `
                     <div class="text-center py-5 text-secondary text-sm" id="emptyMsg">
-                        <i class="material-symbols-rounded text-secondary text-4xl mb-2">qr_code_2</i>
+                        🔲
                         <p class="mb-0">Chưa đọc mã PCard nào. Bấm nút Mở Camera hoặc dùng súng bắn vạch!</p>
                     </div>
                 `;
@@ -477,7 +477,7 @@
                     </div>
                     <div>
                         <button type="button" class="btn btn-link text-danger p-2 mb-0 btn-remove-item" data-code="${item.pcardNo}">
-                            <i class="material-symbols-rounded" style="font-size:22px;">delete_outline</i>
+                            🗑️
                         </button>
                     </div>
                 </div>
@@ -546,7 +546,8 @@
                 C_STYLE:     item.style || '',
                 C_SIZE:      item.size || '',
                 Q_QTY:       item.qty || 0,
-                Q_PLAN:      item.qPlan || 0
+                Q_PLAN:      item.qPlan || 0,
+                PCARD_NO:    item.pcardNo || ''
             }));
 
             try {
@@ -562,13 +563,18 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    const count = data.count || scannedList.length;
+                    const count = data.count || 0;
+                    const totalScanned = scannedList.length;
 
                     scannedList.length = 0;
                     renderScannedList();
                     updateCounters();
 
-                    showScanStatus(true, `✓ Set Out thành công ${count} thẻ PCard!`);
+                    let msg = count > 0 ? `✓ Set Out thành công ${count}/${totalScanned} thẻ PCard!` : 'Không có thẻ nào đủ điều kiện Set Out.';
+                    if (data.outputErrors && data.outputErrors.length > 0) {
+                        msg += ' — ' + data.outputErrors.join(' | ');
+                    }
+                    showScanStatus(count > 0, msg);
                 } else {
                     showScanStatus(false, data.message || 'Lỗi khi lưu dữ liệu vào cơ sở dữ liệu!');
                 }

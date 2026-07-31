@@ -31,13 +31,17 @@ public class YieldController : ControllerBase
 
         try
         {
-            var (savedCount, partYieldMessage, basketId) = await _yieldService.SaveYieldBatchAsync(items);
+            var (savedCount, partYieldMessage, basketId, outputErrors) = await _yieldService.SaveYieldBatchAsync(items);
             var message = $"Đã lưu thành công {savedCount} dòng vào TRTB_M_KEYIN_YIELD";
             if (!string.IsNullOrWhiteSpace(partYieldMessage))
             {
                 message += $" — {partYieldMessage}";
             }
-            return Ok(new { success = true, savedCount, partYieldMessage, basketId, message });
+            if (outputErrors.Count > 0)
+            {
+                message += " | " + string.Join(" | ", outputErrors);
+            }
+            return Ok(new { success = true, savedCount, partYieldMessage, basketId, outputErrors, message });
         }
         catch (Exception ex)
         {

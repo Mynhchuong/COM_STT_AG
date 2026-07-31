@@ -21,22 +21,22 @@
             <div class="card-body p-4 position-relative">
                 <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-center text-center text-sm-start gap-3">
                     <div class="icon icon-shape icon-lg bg-white shadow text-center border-radius-xl d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="material-symbols-rounded text-dark" style="font-size:1.85rem;" aria-hidden="true">person</i>
+                        👤
                     </div>
                     <div class="flex-grow-1">
                         <p class="text-white opacity-8 text-sm mb-1">@greeting,</p>
                         <h5 class="text-white mb-2 vni-name">@Model?.FullName</h5>
                         <div class="d-flex flex-wrap justify-content-center justify-content-sm-start gap-2">
                             <span class="badge bg-white text-dark d-inline-flex align-items-center gap-1 px-3 py-2">
-                                <i class="material-symbols-rounded text-sm" aria-hidden="true">badge</i>@Model?.EmpCd
+                                🪪@Model?.EmpCd
                             </span>
                             <span class="badge bg-white text-dark d-inline-flex align-items-center gap-1 px-3 py-2">
-                                <i class="material-symbols-rounded text-sm" aria-hidden="true">apartment</i>@Model?.DeptNm
+                                🏢@Model?.DeptNm
                             </span>
                             @if (!string.IsNullOrEmpty(Model?.LineCd))
                             {
                                 <span class="badge bg-white text-dark d-inline-flex align-items-center gap-1 px-3 py-2">
-                                    <i class="material-symbols-rounded text-sm" aria-hidden="true">precision_manufacturing</i>Line @Model.LineCd
+                                    🏭 Line @Model.LineCd
                                 </span>
                             }
                         </div>

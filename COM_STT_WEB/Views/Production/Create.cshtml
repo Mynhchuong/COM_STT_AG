@@ -273,7 +273,7 @@
 
 <!-- Mobile Floating Toast Notification -->
 <div id="regToast">
-    <i class="material-symbols-rounded" id="regToastIcon" style="font-size:28px;"></i>
+    <span id="regToastIcon" style="font-size:28px;"></span>
     <div style="flex:1;">
         <div id="regToastTitle" style="font-size:1rem; font-weight:800;"></div>
         <div id="regToastMsg" style="font-size:0.85rem; opacity:0.9;"></div>
@@ -287,7 +287,7 @@
             <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                 <div class="bg-gradient-primary shadow-primary border-radius-lg pt-3 pb-3 px-3 d-flex align-items-center gap-3">
                     <div class="icon icon-shape icon-md bg-white shadow text-center border-radius-md d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="material-symbols-rounded text-primary" style="font-size:1.6rem;">add_circle</i>
+                        ➕
                     </div>
                     <div>
                         <h6 class="text-white mb-0 text-md font-weight-bold">Đăng ký đợt sản xuất</h6>
@@ -326,7 +326,7 @@
                     <div class="d-flex gap-2">
                         <input type="text" id="machineInput" class="form-control" placeholder="Bắn súng hoặc gõ mã máy..." autocomplete="off" inputmode="text" />
                         <button type="button" id="btnAddMachine" class="btn btn-primary mb-0 px-3 d-flex align-items-center justify-content-center" style="min-height:56px; border-radius:14px; font-size:1.2rem;">
-                            <i class="material-symbols-rounded" style="font-size:24px;">add</i>
+                            ➕
                         </button>
                     </div>
                 </div>
@@ -358,7 +358,7 @@
                 <!-- NÚT LƯU STICKY CHO MOBILE -->
                 <div class="sticky-mobile-bar">
                     <button type="button" id="btnSubmitBatch" class="btn bg-gradient-primary w-100 mb-0 d-flex align-items-center justify-content-center gap-2">
-                        <i class="material-symbols-rounded" style="font-size:24px;">save</i>
+                        💾
                         <span id="btnSubmitText">LƯU ĐỢT SẢN XUẤT</span>
                     </button>
                 </div>
@@ -376,7 +376,7 @@
             <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-center justify-content-between">
                 <div>
                     <h6 class="mb-0 text-sm font-weight-bolder d-flex align-items-center gap-2">
-                        <i class="material-symbols-rounded text-primary" style="font-size:22px;">history</i>
+                        🕓
                         Đã đăng ký hôm nay
                     </h6>
                     <p class="text-xs text-secondary mb-0">Bấm <strong>Quét</strong> để bắt đầu nhập PCard</p>
@@ -519,7 +519,7 @@
                 machineList.forEach(function (code) {
                     const tag = document.createElement('span');
                     tag.className = 'machine-tag';
-                    tag.innerHTML = code + '<span class="material-symbols-rounded remove-tag" data-code="' + code + '">close</span>';
+                    tag.innerHTML = code + '<span class="remove-tag" data-code="' + code + '">✖️</span>';
                     tag.querySelector('.remove-tag').addEventListener('click', function () {
                         machineList = machineList.filter(m => m !== code);
                         renderMachineTags();
@@ -553,7 +553,7 @@
             toast.className = 'show';
             toast.style.background = success ? 'linear-gradient(195deg, #2dce89, #1aaf6c)' : 'linear-gradient(195deg, #f5365c, #c0392b)';
             toast.style.color = '#fff';
-            icon.textContent = success ? 'check_circle' : 'error';
+            icon.textContent = success ? '✅' : '❌';
             titleEl.textContent = title;
             msgEl.textContent = msg;
             if (toastTimer) clearTimeout(toastTimer);
@@ -684,10 +684,10 @@
 
                     const scanBtn = b.STATUS === 'N'
                         ? `<a href="${WEB_BASE}/Scan?seq=${b.SEQ}" class="btn btn-sm bg-gradient-success mb-0 d-inline-flex align-items-center gap-1 px-3 py-1" style="font-size:0.8rem; font-weight:700;">
-                               <i class="material-symbols-rounded" style="font-size:16px;">qr_code_scanner</i>Quét
+                               📷 Quét
                            </a>`
                         : `<a href="${WEB_BASE}/Scan?seq=${b.SEQ}" class="btn btn-sm btn-outline-secondary mb-0 d-inline-flex align-items-center gap-1 px-2 py-1" style="font-size:0.75rem;">
-                               <i class="material-symbols-rounded" style="font-size:14px;">visibility</i>Xem
+                               👁️ Xem
                            </a>`;
 
                     return `<tr class="${isNew ? 'newest-row' : ''}">
@@ -733,7 +733,7 @@
                         </div>
                         <div>
                             <a href="${WEB_BASE}/Scan?seq=${b.SEQ}" class="btn ${scanBtnCls} mb-0 px-3 py-2 d-flex align-items-center gap-1 font-weight-bold" style="border-radius:10px; font-size:0.85rem;">
-                                <i class="material-symbols-rounded" style="font-size:18px;">qr_code_scanner</i> ${scanBtnText}
+                                📷 ${scanBtnText}
                             </a>
                         </div>
                     </div>`;

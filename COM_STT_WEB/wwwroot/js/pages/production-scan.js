@@ -186,7 +186,7 @@
                     </td>
                     <td class="align-middle text-center">
                         <button type="button" class="btn btn-link text-danger p-0 mb-0 btn-delete-pcard" data-pcard="${pcardNo}" aria-label="Xoá">
-                            <i class="material-symbols-rounded">delete_outline</i>
+                            🗑️
                         </button>
                     </td>
                 `;
@@ -214,7 +214,7 @@
                         </div>
                         <div>
                             <button type="button" class="btn btn-link text-danger p-2 mb-0 btn-delete-pcard" data-pcard="${pcardNo}" aria-label="Xoá">
-                                <i class="material-symbols-rounded" style="font-size:22px;">delete_outline</i>
+                                🗑️
                             </button>
                         </div>
                     `;

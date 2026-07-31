@@ -100,6 +100,40 @@ public class CompSttSetService
         return await ScanUpdateSetAsync(row.Value.PoNo, basketId, partsNo, inputQty, workerId);
     }
 
+    // Set Out: chỉ cho phép khi C_QTY (số lượng của thẻ) = SET_QTY (đã tạo đủ SET) — đạt điều kiện
+    // thì đánh dấu IS_OUT='Y', DATE_OUT=SYSDATE cho đúng dòng header của thẻ này (I_CARD_NO unique).
+    public async Task<(bool Success, string? Message)> TryMarkCardOutAsync(string cardNo)
+    {
+        const string selectSql = @"
+            SELECT C_QTY, SET_QTY
+            FROM MES.TRTB_M_COMPSTT_SET_HEADER
+            WHERE I_CARD_NO = :cardNo";
+
+        var rows = await _db.ExecuteQueryAsync(selectSql,
+            r => (CQty: r["C_QTY"] == DBNull.Value ? 0 : Convert.ToInt32(r["C_QTY"]),
+                  SetQty: r["SET_QTY"] == DBNull.Value ? 0 : Convert.ToInt32(r["SET_QTY"])),
+            new OracleParameter("cardNo", cardNo));
+
+        if (rows.Count == 0)
+        {
+            return (false, $"Không tìm thấy basket cho PCard {cardNo} — chưa Set In.");
+        }
+
+        var (cQty, setQty) = rows[0];
+        if (cQty != setQty)
+        {
+            return (false, $"PCard {cardNo}: chưa đủ SET ({setQty}/{cQty}) — không thể Set Out.");
+        }
+
+        const string updateSql = @"
+            UPDATE MES.TRTB_M_COMPSTT_SET_HEADER
+            SET IS_OUT = 'Y', DATE_OUT = SYSDATE
+            WHERE I_CARD_NO = :cardNo";
+
+        await _db.ExecuteNonQueryAsync(updateSql, new OracleParameter("cardNo", cardNo));
+        return (true, null);
+    }
+
     private async Task<(bool Success, string? Message)> ScanUpdateSetAsync(string? poNo, int basketId, string partsNo, int inputQty, string workerId)
     {
         try
