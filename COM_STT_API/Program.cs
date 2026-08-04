@@ -13,9 +13,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<AgmesOracleService>();
 
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<InspectionBatchService>();
 builder.Services.AddScoped<ProdPlanService>();
-builder.Services.AddScoped<InspectionHeadService>();
 builder.Services.AddScoped<YieldService>();
 builder.Services.AddScoped<CompSttSetService>();
 builder.Services.AddScoped<ReportService>();

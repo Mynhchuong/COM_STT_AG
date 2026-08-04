@@ -1,7 +1,5 @@
-using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
-using COM_STT_WEB.Models.Production;
 
 namespace COM_STT_WEB.API.Service;
 
@@ -14,75 +12,6 @@ public class ProductionApiService
         _httpClient = httpClient;
     }
 
-    public async Task<List<InspectionBatchViewModel>> GetBatchesAsync(string? date, string? status)
-    {
-        var url = $"api/inspection-batch?status={status ?? "N"}";
-        if (!string.IsNullOrEmpty(date))
-        {
-            url += $"&date={date}";
-        }
-
-        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<InspectionBatchViewModel>>>(url);
-        return response?.Data ?? new List<InspectionBatchViewModel>();
-    }
-
-    public async Task<InspectionBatchViewModel?> GetBatchAsync(int seq)
-    {
-        var response = await _httpClient.GetFromJsonAsync<ApiResponse<InspectionBatchViewModel>>($"api/inspection-batch/{seq}");
-        return response?.Data;
-    }
-
-    public async Task<int> CreateBatchAsync(BatchRegistrationViewModel model, string ipAddress)
-    {
-        var response = await _httpClient.PostAsJsonAsync("api/inspection-batch", new
-        {
-            LINE_CODE = model.LineCode,
-            MACHINE_CODE = model.MachineCode,
-            IP_UPLOAD = ipAddress,
-            C_SHIFT = model.CShift,
-            PLANT = model.Plant
-        });
-
-        if (response.IsSuccessStatusCode)
-        {
-            var res = await response.Content.ReadFromJsonAsync<CreateBatchResponse>();
-            return res?.Seq ?? 0;
-        }
-
-        return 0;
-    }
-
-    public async Task<bool> UpdateBatchAsync(int seq, BatchRegistrationViewModel model)
-    {
-        var response = await _httpClient.PutAsJsonAsync($"api/inspection-batch/{seq}", new
-        {
-            LINE_CODE = model.LineCode,
-            MACHINE_CODE = model.MachineCode,
-            C_SHIFT = model.CShift,
-            PLANT = model.Plant
-        });
-
-        return response.IsSuccessStatusCode;
-    }
-
-    public async Task<bool> FinishBatchAsync(int seq)
-    {
-        var response = await _httpClient.PutAsync($"api/inspection-batch/{seq}/finish", null);
-        return response.IsSuccessStatusCode;
-    }
-
-    public async Task<List<PcardScanItemViewModel>> GetPcardsBySeqAsync(int seq)
-    {
-        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<PcardScanItemViewModel>>>($"api/inspection-head?seq={seq}");
-        return response?.Data ?? new List<PcardScanItemViewModel>();
-    }
-
-    public async Task<bool> ExistsPcardAsync(string pcardNo)
-    {
-        var response = await _httpClient.GetAsync($"api/inspection-head/{pcardNo}");
-        return response.StatusCode == HttpStatusCode.OK;
-    }
-
     public async Task<PcardPlanInfoResponse?> GetProdPlanInfoAsync(string cardNo)
     {
         var response = await _httpClient.GetAsync($"api/prod-plan/{cardNo}");
@@ -92,29 +21,6 @@ public class ProductionApiService
             return res?.Data;
         }
         return null;
-    }
-
-    public async Task<bool> CreateInspectionHeadAsync(PcardScanItemViewModel item)
-    {
-        var response = await _httpClient.PostAsJsonAsync("api/inspection-head", new
-        {
-            PCARD_NO = item.PcardNo,
-            C_GROUP_SUM = item.CGroupSum,
-            C_STYLE = item.CStyle,
-            C_ORDER = item.COrder,
-            I_PARTS_NO = item.IPartsNo,
-            C_SIZE = item.CSize,
-            SEQ = item.Seq,
-            Q_QTY = item.QQty
-        });
-
-        return response.IsSuccessStatusCode;
-    }
-
-    public async Task<bool> DeleteInspectionHeadAsync(string pcardNo)
-    {
-        var response = await _httpClient.DeleteAsync($"api/inspection-head/{pcardNo}");
-        return response.IsSuccessStatusCode;
     }
 
     public async Task<SaveYieldBatchResult> SaveYieldBatchAsync(List<KeyinYieldItemModel> items)
@@ -131,33 +37,6 @@ public class ProductionApiService
             BasketId = body?.BasketId,
             OutputErrors = body?.OutputErrors
         };
-    }
-
-    public async Task<List<KeyinPartYieldStatusRowModel>> GetPartYieldStatusByOrderAsync(string ordNo)
-    {
-        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<KeyinPartYieldStatusRowModel>>>(
-            $"api/yield/part-status?ordNo={Uri.EscapeDataString(ordNo)}");
-        return response?.Data ?? new List<KeyinPartYieldStatusRowModel>();
-    }
-
-    public async Task<bool> CompleteOrderAsync(string ordNo)
-    {
-        var response = await _httpClient.PostAsync($"api/yield/complete-order?ordNo={Uri.EscapeDataString(ordNo)}", null);
-        return response.IsSuccessStatusCode;
-    }
-
-    public async Task<bool> IsOrderCompleteAsync(string ordNo)
-    {
-        var response = await _httpClient.GetFromJsonAsync<OrderCompleteStatusApiResponse>(
-            $"api/yield/order-complete-status?ordNo={Uri.EscapeDataString(ordNo)}");
-        return response?.IsComplete ?? false;
-    }
-
-    public async Task<bool> RoutingExistsAsync(string style)
-    {
-        var response = await _httpClient.GetFromJsonAsync<RoutingExistsApiResponse>(
-            $"api/yield/routing-exists?style={Uri.EscapeDataString(style)}");
-        return response?.Exists ?? false;
     }
 
     public async Task<int?> GetBasketIdByCardNoAsync(string cardNo)
@@ -198,22 +77,6 @@ public class ProductionApiService
         return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
     }
 
-    public async Task<PartYieldUpdateResult> MarkPartYieldDoneAsync(string ordNo, string size, string partsNo)
-    {
-        var url = $"api/yield/part-mark-done?ordNo={Uri.EscapeDataString(ordNo)}&size={Uri.EscapeDataString(size)}&partsNo={Uri.EscapeDataString(partsNo)}";
-        var response = await _httpClient.PostAsync(url, null);
-        var body = await response.Content.ReadFromJsonAsync<PartYieldUpdateApiResponse>();
-        return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
-    }
-
-    public async Task<PartYieldUpdateResult> UpdatePartYieldQtyAsync(string ordNo, string size, string partsNo, int qty)
-    {
-        var url = $"api/yield/part-update-qty?ordNo={Uri.EscapeDataString(ordNo)}&size={Uri.EscapeDataString(size)}&partsNo={Uri.EscapeDataString(partsNo)}&qty={qty}";
-        var response = await _httpClient.PostAsync(url, null);
-        var body = await response.Content.ReadFromJsonAsync<PartYieldUpdateApiResponse>();
-        return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
-    }
-
     public async Task<List<KeyinYieldLogItemModel>> GetTodayYieldAsync(string? worker, string? date = null)
     {
         var query = new List<string>();
@@ -229,13 +92,6 @@ public class ProductionApiService
         var response = await _httpClient.DeleteAsync($"api/yield/{Uri.EscapeDataString(dGather)}");
         return response.IsSuccessStatusCode;
     }
-
-    public async Task<List<KeyinYieldSizePivotRowModel>> GetSizePivotByOrderAsync(string ordNo)
-    {
-        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<KeyinYieldSizePivotRowModel>>>(
-            $"api/yield/size-pivot?ordNo={Uri.EscapeDataString(ordNo)}");
-        return response?.Data ?? new List<KeyinYieldSizePivotRowModel>();
-    }
 }
 
 public class ApiResponse<T>
@@ -245,16 +101,6 @@ public class ApiResponse<T>
 
     [JsonPropertyName("data")]
     public T? Data { get; set; }
-}
-
-public class CreateBatchResponse
-{
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-
-    // API serializes SEQ as lowercase "seq" (ASP.NET camelCase default)
-    [JsonPropertyName("seq")]
-    public int Seq { get; set; }
 }
 
 public class PcardPlanInfoResponse
@@ -401,30 +247,6 @@ public class KeyinYieldLogItemModel
     public string? IIpNo { get; set; }
 }
 
-public class KeyinYieldSizePivotRowModel
-{
-    [JsonPropertyName("C_PO_NUM")]
-    public string? CPoNum { get; set; }
-
-    [JsonPropertyName("C_ORD_NO")]
-    public string? COrdNo { get; set; }
-
-    [JsonPropertyName("C_STYLE")]
-    public string? CStyle { get; set; }
-
-    [JsonPropertyName("C_WIDTH")]
-    public string? CWidth { get; set; }
-
-    [JsonPropertyName("C_ACTION")]
-    public string? CAction { get; set; }
-
-    [JsonPropertyName("C_KEYINLOC")]
-    public string? CKeyinLoc { get; set; }
-
-    [JsonPropertyName("SIZES")]
-    public Dictionary<string, int> Sizes { get; set; } = new();
-}
-
 public class SaveYieldBatchApiResponse
 {
     [JsonPropertyName("success")]
@@ -456,24 +278,6 @@ public class SaveYieldBatchResult
     public List<string>? OutputErrors { get; set; }
 }
 
-public class RoutingExistsApiResponse
-{
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-
-    [JsonPropertyName("exists")]
-    public bool Exists { get; set; }
-}
-
-public class OrderCompleteStatusApiResponse
-{
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-
-    [JsonPropertyName("isComplete")]
-    public bool IsComplete { get; set; }
-}
-
 public class PartYieldUpdateApiResponse
 {
     [JsonPropertyName("success")]
@@ -487,27 +291,6 @@ public class PartYieldUpdateResult
 {
     public bool Success { get; set; }
     public string? Message { get; set; }
-}
-
-public class KeyinPartYieldStatusRowModel
-{
-    [JsonPropertyName("I_PO_NO")]
-    public string? IPoNo { get; set; }
-
-    [JsonPropertyName("C_STYLE")]
-    public string? CStyle { get; set; }
-
-    [JsonPropertyName("ROW_TYPE")]
-    public string? RowType { get; set; }
-
-    [JsonPropertyName("I_PARTS_NO")]
-    public string? IPartsNo { get; set; }
-
-    [JsonPropertyName("N_PARTS_NO")]
-    public string? NPartsNo { get; set; }
-
-    [JsonPropertyName("SIZES")]
-    public Dictionary<string, int> Sizes { get; set; } = new();
 }
 
 public class BasketIdApiResponse

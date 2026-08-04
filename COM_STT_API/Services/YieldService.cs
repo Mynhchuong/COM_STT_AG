@@ -133,22 +133,6 @@ public class YieldService
         return resultParam.Value == DBNull.Value ? null : resultParam.Value?.ToString();
     }
 
-    // Trước khi chuyển từ Set In sang trang Chờ Set In — kiểm tra Style đã có Routing chưa.
-    // Chưa có Routing thì SP_INSERT_KEYIN_PART_YIELD sẽ không nổ được dòng nào vào
-    // TRTB_M_KEYIN_PART_YIELD (do JOIN với bảng này ra rỗng) — vào trang Chờ Set In cũng
-    // không có gì để xem, nên chặn sớm ở đây và báo cho biết luôn.
-    public async Task<bool> RoutingExistsAsync(string style)
-    {
-        const string sql = @"
-            SELECT COUNT(*) AS CNT
-            FROM MES.TRTB_M_KEYIN_ROUTING
-            WHERE C_STYLE = :styleVal";
-
-        var results = await _db.ExecuteQueryAsync(sql, r => Convert.ToInt32(r["CNT"]),
-            new OracleParameter("styleVal", style ?? string.Empty));
-        return results.FirstOrDefault() > 0;
-    }
-
     // date: định dạng yyyyMMdd — không truyền thì mặc định hôm nay (giữ đúng hành vi cũ).
     public async Task<List<KeyinYieldLogItem>> GetTodayAsync(string? worker, string? date = null)
     {
@@ -180,176 +164,6 @@ public class YieldService
         return rowsAffected > 0;
     }
 
-    // Danh sách 44 mã size cố định (01M..22T) — khớp đúng các cột SIZE_xx trong view V_KEYIN_YIELD_SIZE_PIVOT.
-    public static readonly IReadOnlyList<string> SizeCodes = BuildSizeCodes();
-
-    private static List<string> BuildSizeCodes()
-    {
-        var list = new List<string>();
-        for (int i = 1; i <= 22; i++)
-        {
-            var n = i.ToString("00");
-            list.Add(n + "M");
-            list.Add(n + "T");
-        }
-        return list;
-    }
-
-    public async Task<List<KeyinYieldSizePivotRow>> GetSizePivotByOrderAsync(string ordNo)
-    {
-        var sizeCols = string.Join(", ", SizeCodes.Select(s => "SIZE_" + s));
-        var sql = $@"
-            SELECT C_PO_NUM, C_ORD_NO, C_STYLE, C_WIDTH, C_ACTION, C_KEYINLOC, {sizeCols}
-            FROM MES.V_KEYIN_YIELD_SIZE_PIVOT
-            WHERE C_ORD_NO = :ordNo
-            ORDER BY C_STYLE, C_WIDTH, DECODE(C_ACTION, 'INPUT', 1, 'OUTPUT', 2, 'BALANCE', 3, 4)";
-
-        return await _db.ExecuteQueryAsync(sql, MapSizePivotRow, new OracleParameter("ordNo", ordNo));
-    }
-
-    private static KeyinYieldSizePivotRow MapSizePivotRow(OracleDataReader r)
-    {
-        var row = new KeyinYieldSizePivotRow
-        {
-            CPoNum = r["C_PO_NUM"] as string,
-            COrdNo = r["C_ORD_NO"] as string,
-            CStyle = r["C_STYLE"] as string,
-            CWidth = r["C_WIDTH"] as string,
-            CAction = r["C_ACTION"] as string,
-            CKeyinLoc = r["C_KEYINLOC"] as string
-        };
-
-        foreach (var size in SizeCodes)
-        {
-            var col = "SIZE_" + size;
-            var val = r[col];
-            row.Sizes[size] = val == DBNull.Value ? 0 : Convert.ToInt32(val);
-        }
-
-        return row;
-    }
-
-    // Nút "Hoàn tất": web chỉ cho bấm khi ĐÃ QUÉT = KẾ HOẠCH và CÒN LẠI = 0 ở mọi size/part (kiểm
-    // tra phía client trước khi hiện nút) — nên ở đây chốt thẳng toàn bộ PO/CUT_2 luôn, không cần
-    // NOT EXISTS kiểm tra lại. Sau khi hoàn tất, web sẽ khoá không cho bấm/sửa ô ĐÃ QUÉT nữa.
-    public async Task<int> CompleteOrderAsync(string ordNo)
-    {
-        const string sql = @"
-            UPDATE MES.TRTB_M_KEYIN_PART_YIELD
-            SET Q_QTY = Q_PLAN, IS_DONE = 'Y',
-                DATE_DONE = NVL(DATE_DONE, SYSDATE),
-                IS_COMPLETE = 'Y',
-                DATE_COMPLETE = NVL(DATE_COMPLETE, SYSDATE)
-            WHERE I_PO_NO = :ordNo
-              AND C_KEYINLOC = 'CUT_2'";
-
-        return await _db.ExecuteNonQueryAsync(sql, new OracleParameter("ordNo", ordNo));
-    }
-
-    // Kiểm tra Order đã bấm Hoàn tất chưa (để khoá lại không cho sửa ô ĐÃ QUÉT khi vào lại trang).
-    public async Task<bool> IsOrderCompleteAsync(string ordNo)
-    {
-        const string sql = @"
-            SELECT COUNT(*) AS CNT
-            FROM MES.TRTB_M_KEYIN_PART_YIELD
-            WHERE I_PO_NO = :ordNo AND C_KEYINLOC = 'CUT_2' AND IS_COMPLETE = 'Y'";
-
-        var results = await _db.ExecuteQueryAsync(sql, r => Convert.ToInt32(r["CNT"]),
-            new OracleParameter("ordNo", ordNo));
-        return results.FirstOrDefault() > 0;
-    }
-
-    // Bấm 1 lần (chưa xử lý lần nào) trên ô ĐÃ QUÉT — nhận đủ theo kế hoạch.
-    public async Task<(bool Success, string? Message)> MarkPartYieldDoneAsync(string ordNo, string size, string partsNo)
-    {
-        const string sql = @"
-            UPDATE MES.TRTB_M_KEYIN_PART_YIELD
-            SET Q_QTY = Q_PLAN, IS_DONE = 'Y', DATE_DONE = SYSDATE
-            WHERE I_PO_NO = :ordNo AND C_SIZE = :sizeVal AND I_PARTS_NO = :partsNo AND C_KEYINLOC = 'CUT_2'";
-
-        var rows = await _db.ExecuteNonQueryAsync(sql,
-            new OracleParameter("ordNo", ordNo),
-            new OracleParameter("sizeVal", size),
-            new OracleParameter("partsNo", partsNo));
-
-        return rows > 0 ? (true, null) : (false, "Không tìm thấy dòng dữ liệu để cập nhật.");
-    }
-
-    // Bấm lần thứ 2 trở đi (đã xử lý rồi, muốn sửa) — nhập tay số lượng thực nhận, không được vượt kế hoạch.
-    public async Task<(bool Success, string? Message)> UpdatePartYieldQtyAsync(string ordNo, string size, string partsNo, int qty)
-    {
-        if (qty < 0)
-        {
-            return (false, "Số lượng không hợp lệ.");
-        }
-
-        const string planSql = @"
-            SELECT NVL(MAX(Q_PLAN), 0) AS Q_PLAN
-            FROM MES.TRTB_M_KEYIN_PART_YIELD
-            WHERE I_PO_NO = :ordNo AND C_SIZE = :sizeVal AND I_PARTS_NO = :partsNo AND C_KEYINLOC = 'CUT_2'";
-
-        var planResults = await _db.ExecuteQueryAsync(planSql, r => Convert.ToInt32(r["Q_PLAN"]),
-            new OracleParameter("ordNo", ordNo),
-            new OracleParameter("sizeVal", size),
-            new OracleParameter("partsNo", partsNo));
-        var plan = planResults.FirstOrDefault();
-
-        if (plan <= 0)
-        {
-            return (false, "Không tìm thấy kế hoạch cho part/size này.");
-        }
-        if (qty > plan)
-        {
-            return (false, $"Số lượng ({qty}) không được lớn hơn kế hoạch ({plan}).");
-        }
-
-        const string sql = @"
-            UPDATE MES.TRTB_M_KEYIN_PART_YIELD
-            SET Q_QTY = :qty, IS_DONE = 'N', DATE_DONE = NULL
-            WHERE I_PO_NO = :ordNo AND C_SIZE = :sizeVal AND I_PARTS_NO = :partsNo AND C_KEYINLOC = 'CUT_2'";
-
-        var rows = await _db.ExecuteNonQueryAsync(sql,
-            new OracleParameter("qty", qty),
-            new OracleParameter("ordNo", ordNo),
-            new OracleParameter("sizeVal", size),
-            new OracleParameter("partsNo", partsNo));
-
-        return rows > 0 ? (true, null) : (false, "Không tìm thấy dòng dữ liệu để cập nhật.");
-    }
-
-    public async Task<List<KeyinPartYieldStatusRow>> GetPartYieldStatusByOrderAsync(string ordNo)
-    {
-        var sizeCols = string.Join(", ", SizeCodes.Select(s => "SIZE_" + s));
-        var sql = $@"
-            SELECT I_PO_NO, C_STYLE, ROW_TYPE, I_PARTS_NO, N_PARTS_NO, {sizeCols}
-            FROM MES.V_KEYIN_PART_YIELD_STATUS
-            WHERE I_PO_NO = :ordNo
-            ORDER BY I_PARTS_NO, ROW_TYPE";
-
-        return await _db.ExecuteQueryAsync(sql, MapPartYieldStatusRow, new OracleParameter("ordNo", ordNo));
-    }
-
-    private static KeyinPartYieldStatusRow MapPartYieldStatusRow(OracleDataReader r)
-    {
-        var row = new KeyinPartYieldStatusRow
-        {
-            IPoNo = r["I_PO_NO"] as string,
-            CStyle = r["C_STYLE"] as string,
-            RowType = r["ROW_TYPE"] as string,
-            IPartsNo = r["I_PARTS_NO"] as string,
-            NPartsNo = r["N_PARTS_NO"] as string
-        };
-
-        foreach (var size in SizeCodes)
-        {
-            var col = "SIZE_" + size;
-            var val = r[col];
-            row.Sizes[size] = val == DBNull.Value ? 0 : Convert.ToInt32(val);
-        }
-
-        return row;
-    }
-
     private static KeyinYieldLogItem MapRow(OracleDataReader r) => new()
     {
         DGather = r["D_GATHER"] as string ?? string.Empty,
@@ -366,4 +180,19 @@ public class YieldService
         QQty = r["Q_QTY"] == DBNull.Value ? 0 : Convert.ToInt32(r["Q_QTY"]),
         IIpNo = r["I_IP_NO"] as string
     };
+
+    // Danh sách 44 mã size cố định (01M..22T) — ReportService dùng để build cột báo cáo theo size.
+    public static readonly IReadOnlyList<string> SizeCodes = BuildSizeCodes();
+
+    private static List<string> BuildSizeCodes()
+    {
+        var list = new List<string>();
+        for (int i = 1; i <= 22; i++)
+        {
+            var n = i.ToString("00");
+            list.Add(n + "M");
+            list.Add(n + "T");
+        }
+        return list;
+    }
 }

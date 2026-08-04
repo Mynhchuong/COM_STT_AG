@@ -72,6 +72,11 @@ public class CompSttSetService
     // Bấm 1 lần (chưa có QTY_RECEIVE) — nhận đủ theo C_QTY: cộng thêm đúng phần còn thiếu.
     public async Task<(bool Success, string? Message)> MarkBasketDetailDoneAsync(int basketId, string partsNo, string workerId)
     {
+        if (await IsBasketOutAsync(basketId))
+        {
+            return (false, "Basket này đã Set Out rồi — không thể sửa số lượng nhận nữa.");
+        }
+
         var row = await GetDetailRowAsync(basketId, partsNo);
         if (row == null)
         {
@@ -86,6 +91,11 @@ public class CompSttSetService
     // ra INPUT_QTY (chênh lệch so với QTY_RECEIVE hiện tại) để cộng dồn đúng theo thủ tục.
     public async Task<(bool Success, string? Message)> UpdateBasketDetailQtyAsync(int basketId, string partsNo, int newTotalQty, string workerId)
     {
+        if (await IsBasketOutAsync(basketId))
+        {
+            return (false, "Basket này đã Set Out rồi — không thể sửa số lượng nhận nữa.");
+        }
+
         var row = await GetDetailRowAsync(basketId, partsNo);
         if (row == null)
         {
@@ -98,6 +108,20 @@ public class CompSttSetService
 
         var inputQty = newTotalQty - row.Value.QtyReceive;
         return await ScanUpdateSetAsync(row.Value.PoNo, basketId, partsNo, inputQty, workerId);
+    }
+
+    // Basket có 1-2 thẻ (header row/thẻ) — chỉ cần 1 thẻ trong basket đã Set Out là coi như basket
+    // đã "chốt", không cho sửa số lượng nhận nữa (tránh sửa ngược sau khi hàng đã ra chuyền).
+    private async Task<bool> IsBasketOutAsync(int basketId)
+    {
+        const string sql = @"
+            SELECT COUNT(*) AS CNT
+            FROM MES.TRTB_M_COMPSTT_SET_HEADER
+            WHERE BASKET_ID = :basketId AND IS_OUT = 'Y'";
+
+        var results = await _db.ExecuteQueryAsync(sql, r => Convert.ToInt32(r["CNT"]),
+            new OracleParameter("basketId", basketId));
+        return results.FirstOrDefault() > 0;
     }
 
     // Set Out: chỉ cho phép khi C_QTY (số lượng của thẻ) = SET_QTY (đã tạo đủ SET) VÀ thẻ CHƯA

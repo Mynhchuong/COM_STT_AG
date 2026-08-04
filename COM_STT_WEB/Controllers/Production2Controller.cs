@@ -135,37 +135,6 @@ public class Production2Controller : Controller
     }
 
     // ============================================================
-    // 4. QUẢN LÝ SET IN/OUT — bảng pivot số lượng theo size, tra theo C_ORD_NO (chạy trên desktop)
-    // ============================================================
-    [HttpGet]
-    public IActionResult Manage()
-    {
-        return View();
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetSizePivot([FromQuery] string ordNo)
-    {
-        if (string.IsNullOrWhiteSpace(ordNo))
-        {
-            return BadRequest(new { success = false, message = "Vui lòng nhập số Order." });
-        }
-
-        var rows = await _apiService.GetSizePivotByOrderAsync(ordNo.Trim());
-        return Ok(new { success = true, data = rows });
-    }
-
-    // ============================================================
-    // 5. CHỜ SET IN — trạng thái theo Order: TOTAL kế hoạch / đã quét / còn lại theo từng part+size
-    // ============================================================
-    [HttpGet]
-    public IActionResult Pending(string? ordNo)
-    {
-        ViewData["OrdNo"] = ordNo;
-        return View();
-    }
-
-    // ============================================================
     // 6. CHỜ SET IN (v2) — dựa trên TRTB_M_COMPSTT_SET_HEADER/DETAIL (basket 1-2 PCard/lượt)
     // ============================================================
     [HttpGet]
@@ -233,86 +202,6 @@ public class Production2Controller : Controller
         var empCd = user?.EmpCd ?? "N/A";
         var result = await _apiService.UpdateBasketDetailQtyAsync(basketId, partsNo, qty, empCd);
         return Ok(new { success = result.Success, message = result.Message });
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetPartYieldStatus([FromQuery] string ordNo)
-    {
-        if (string.IsNullOrWhiteSpace(ordNo))
-        {
-            return BadRequest(new { success = false, message = "Vui lòng nhập số Order." });
-        }
-
-        var rows = await _apiService.GetPartYieldStatusByOrderAsync(ordNo.Trim());
-        return Ok(new { success = true, data = rows });
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MarkPartDone([FromQuery] string ordNo, [FromQuery] string size, [FromQuery] string partsNo)
-    {
-        if (string.IsNullOrWhiteSpace(ordNo) || string.IsNullOrWhiteSpace(size) || string.IsNullOrWhiteSpace(partsNo))
-        {
-            return BadRequest(new { success = false, message = "Thiếu tham số." });
-        }
-
-        var result = await _apiService.MarkPartYieldDoneAsync(ordNo.Trim(), size.Trim(), partsNo.Trim());
-        return Ok(new { success = result.Success, message = result.Message });
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdatePartQty([FromQuery] string ordNo, [FromQuery] string size, [FromQuery] string partsNo, [FromQuery] int qty)
-    {
-        if (string.IsNullOrWhiteSpace(ordNo) || string.IsNullOrWhiteSpace(size) || string.IsNullOrWhiteSpace(partsNo))
-        {
-            return BadRequest(new { success = false, message = "Thiếu tham số." });
-        }
-
-        var result = await _apiService.UpdatePartYieldQtyAsync(ordNo.Trim(), size.Trim(), partsNo.Trim(), qty);
-        return Ok(new { success = result.Success, message = result.Message });
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CompleteOrder([FromQuery] string ordNo)
-    {
-        if (string.IsNullOrWhiteSpace(ordNo))
-        {
-            return BadRequest(new { success = false, message = "Vui lòng nhập số Order." });
-        }
-
-        var ok = await _apiService.CompleteOrderAsync(ordNo.Trim());
-        if (!ok)
-        {
-            return StatusCode(500, new { success = false, message = "Không thể đánh dấu hoàn tất." });
-        }
-
-        return Ok(new { success = true });
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> RoutingExists([FromQuery] string style)
-    {
-        if (string.IsNullOrWhiteSpace(style))
-        {
-            return BadRequest(new { success = false, message = "Thiếu tham số style." });
-        }
-
-        var exists = await _apiService.RoutingExistsAsync(style.Trim());
-        return Ok(new { success = true, exists });
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetOrderCompleteStatus([FromQuery] string ordNo)
-    {
-        if (string.IsNullOrWhiteSpace(ordNo))
-        {
-            return BadRequest(new { success = false, message = "Vui lòng nhập số Order." });
-        }
-
-        var isComplete = await _apiService.IsOrderCompleteAsync(ordNo.Trim());
-        return Ok(new { success = true, isComplete });
     }
 
     private static string? Truncate(string? value, int maxLength)
