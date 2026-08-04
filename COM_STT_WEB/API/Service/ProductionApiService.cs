@@ -354,6 +354,9 @@ public class KeyinYieldItemModel
 
     [JsonPropertyName("PCARD_NO")]
     public string? PcardNo { get; set; }
+
+    [JsonPropertyName("LINE_OUT")]
+    public string? LineOut { get; set; }
 }
 
 public class KeyinYieldLogItemModel

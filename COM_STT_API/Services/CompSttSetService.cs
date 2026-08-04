@@ -100,18 +100,21 @@ public class CompSttSetService
         return await ScanUpdateSetAsync(row.Value.PoNo, basketId, partsNo, inputQty, workerId);
     }
 
-    // Set Out: chỉ cho phép khi C_QTY (số lượng của thẻ) = SET_QTY (đã tạo đủ SET) — đạt điều kiện
-    // thì đánh dấu IS_OUT='Y', DATE_OUT=SYSDATE cho đúng dòng header của thẻ này (I_CARD_NO unique).
-    public async Task<(bool Success, string? Message)> TryMarkCardOutAsync(string cardNo)
+    // Set Out: chỉ cho phép khi C_QTY (số lượng của thẻ) = SET_QTY (đã tạo đủ SET) VÀ thẻ CHƯA
+    // Out lần nào (IS_OUT khác 'Y') — đạt điều kiện thì đánh dấu IS_OUT='Y', DATE_OUT=SYSDATE cho
+    // đúng dòng header của thẻ này (I_CARD_NO unique). Thiếu check IS_OUT trước đây khiến 1 thẻ
+    // Set Out được nhiều lần (mỗi lần đều ghi thêm dòng vào TRTB_M_KEYIN_YIELD).
+    public async Task<(bool Success, string? Message)> TryMarkCardOutAsync(string cardNo, string? lineOut)
     {
         const string selectSql = @"
-            SELECT C_QTY, SET_QTY
+            SELECT C_QTY, SET_QTY, IS_OUT
             FROM MES.TRTB_M_COMPSTT_SET_HEADER
             WHERE I_CARD_NO = :cardNo";
 
         var rows = await _db.ExecuteQueryAsync(selectSql,
             r => (CQty: r["C_QTY"] == DBNull.Value ? 0 : Convert.ToInt32(r["C_QTY"]),
-                  SetQty: r["SET_QTY"] == DBNull.Value ? 0 : Convert.ToInt32(r["SET_QTY"])),
+                  SetQty: r["SET_QTY"] == DBNull.Value ? 0 : Convert.ToInt32(r["SET_QTY"]),
+                  IsOut: r["IS_OUT"] as string),
             new OracleParameter("cardNo", cardNo));
 
         if (rows.Count == 0)
@@ -119,18 +122,30 @@ public class CompSttSetService
             return (false, $"Không tìm thấy basket cho PCard {cardNo} — chưa Set In.");
         }
 
-        var (cQty, setQty) = rows[0];
+        var (cQty, setQty, isOut) = rows[0];
+        if (string.Equals(isOut, "Y", StringComparison.OrdinalIgnoreCase))
+        {
+            return (false, $"PCard {cardNo} đã Out rồi — không thể Out thêm lần nữa.");
+        }
         if (cQty != setQty)
         {
             return (false, $"PCard {cardNo}: chưa đủ SET ({setQty}/{cQty}) — không thể Set Out.");
         }
 
+        // WHERE thêm IS_OUT <> 'Y' làm lưới an toàn cho race condition (2 request Set Out cùng
+        // thẻ gần như đồng thời) — chỉ request nào thật sự update được (affected=1) mới coi là hợp lệ.
         const string updateSql = @"
             UPDATE MES.TRTB_M_COMPSTT_SET_HEADER
-            SET IS_OUT = 'Y', DATE_OUT = SYSDATE
-            WHERE I_CARD_NO = :cardNo";
+            SET IS_OUT = 'Y', DATE_OUT = SYSDATE, LINEOUT = :lineOut
+            WHERE I_CARD_NO = :cardNo AND NVL(IS_OUT, 'N') <> 'Y'";
 
-        await _db.ExecuteNonQueryAsync(updateSql, new OracleParameter("cardNo", cardNo));
+        var affected = await _db.ExecuteNonQueryAsync(updateSql,
+            new OracleParameter("lineOut", string.IsNullOrWhiteSpace(lineOut) ? (object)DBNull.Value : lineOut),
+            new OracleParameter("cardNo", cardNo));
+        if (affected == 0)
+        {
+            return (false, $"PCard {cardNo} đã Out rồi — không thể Out thêm lần nữa.");
+        }
         return (true, null);
     }
 

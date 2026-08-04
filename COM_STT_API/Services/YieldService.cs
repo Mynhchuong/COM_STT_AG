@@ -56,7 +56,7 @@ public class YieldService
             // Không đạt thì bỏ qua thẻ này (không insert YIELD, không đánh dấu IS_OUT), báo lỗi rõ.
             if (string.Equals(item.CAction, "OUTPUT", StringComparison.OrdinalIgnoreCase))
             {
-                var (canOut, outMessage) = await _compSttSetService.TryMarkCardOutAsync(item.PcardNo ?? string.Empty);
+                var (canOut, outMessage) = await _compSttSetService.TryMarkCardOutAsync(item.PcardNo ?? string.Empty, item.LineOut);
                 if (!canOut)
                 {
                     outputErrors.Add(outMessage ?? $"PCard {item.PcardNo}: không thể Set Out.");
