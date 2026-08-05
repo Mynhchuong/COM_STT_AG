@@ -64,7 +64,7 @@
 
                 bodyHtml += `
                     <tr class="${ROW_CLASS[lineNo] || ''}" style="${isNewGroup ? 'border-top:3px solid #344767;' : ''}">
-                        <td class="meta-col col-po">${isNewGroup ? (row.I_PO_NO || '') : ''}</td>
+                        <td class="meta-col col-po">${isNewGroup && row.I_PO_NO ? `<a href="/Report/ByPo?po=${encodeURIComponent(row.I_PO_NO)}" class="po-link">${row.I_PO_NO}</a>` : ''}</td>
                         <td class="meta-col col-style">${isNewGroup ? (row.C_STYLE || '') : ''}</td>
                         <td class="meta-col col-part-no">${isNewGroup ? (row.I_PARTS_NO || '') : ''}</td>
                         <td class="meta-col col-part-name" title="${row.N_PARTS_NO || ''}">${isNewGroup ? (row.N_PARTS_NO || '') : ''}</td>

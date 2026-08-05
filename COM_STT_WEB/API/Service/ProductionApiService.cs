@@ -54,6 +54,13 @@ public class ProductionApiService
         return response?.Data ?? new List<CompSttSetHeaderRowModel>();
     }
 
+    public async Task<List<CompSttSetHeaderRowModel>> GetCardsByPoAsync(string po)
+    {
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<CompSttSetHeaderRowModel>>>(
+            $"api/compstt-set/cards-by-po?po={Uri.EscapeDataString(po)}");
+        return response?.Data ?? new List<CompSttSetHeaderRowModel>();
+    }
+
     public async Task<List<CompSttSetDetailRowModel>> GetBasketDetailAsync(int basketId)
     {
         var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<CompSttSetDetailRowModel>>>(
@@ -334,6 +341,9 @@ public class CompSttSetHeaderRowModel
     [JsonPropertyName("C_QTY")]
     public int CQty { get; set; }
 
+    [JsonPropertyName("SET_QTY")]
+    public int SetQty { get; set; }
+
     [JsonPropertyName("IS_IN")]
     public string? IsIn { get; set; }
 
@@ -345,6 +355,12 @@ public class CompSttSetHeaderRowModel
 
     [JsonPropertyName("IS_OUT")]
     public string? IsOut { get; set; }
+
+    [JsonPropertyName("DATE_OUT")]
+    public DateTime? DateOut { get; set; }
+
+    [JsonPropertyName("LINEOUT")]
+    public string? LineOut { get; set; }
 }
 
 public class CompSttSetDetailRowModel

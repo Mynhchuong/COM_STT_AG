@@ -1,5 +1,6 @@
 @{
     ViewData["Title"] = "Báo cáo theo PO - Sản xuất";
+    var initialPo = ViewData["Po"] as string;
 }
 
 <style>
@@ -92,6 +93,29 @@
     .summary-card.summary-balance .summary-value { color: #f5365c; }
 
     .legend-dot { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:middle; }
+
+    /* 3 cột nhóm thẻ theo trạng thái (Đã Out / Đang chờ nhận / Chưa nhận gì) */
+    .card-group-col { height: 100%; }
+    .card-group-body { max-height: 340px; overflow-y: auto; }
+    .card-item {
+        display: block;
+        text-decoration: none !important;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.55rem 0.7rem;
+        margin-bottom: 0.5rem;
+        color: inherit;
+        transition: background 0.15s;
+    }
+    .card-item:hover { background: #eef1f5; }
+    .card-item .card-item-code { font-weight: 800; font-size: 0.9rem; color: #344767; }
+    .card-item .card-item-meta { font-size: 0.72rem; color: #8898aa; }
+    .card-item .card-item-progress { font-size: 0.75rem; font-weight: 700; }
+    .card-item .card-item-lineout { font-size: 0.75rem; font-weight: 700; color: #1a73e8; margin-top: 0.15rem; }
+    .card-group-empty { text-align: center; color: #adb5bd; font-size: 0.8rem; padding: 1rem 0; }
+    .card-group-pager { border-top: 1px solid #e9ecef; }
+    .card-group-pager .btn { min-width: 76px; }
 </style>
 
 <div class="row">
@@ -123,7 +147,7 @@
             <div class="card-body p-3 d-flex flex-wrap align-items-end gap-2">
                 <div>
                     <label for="poInput" class="text-xs font-weight-bolder text-dark mb-1 d-block">Order (PO)</label>
-                    <input type="text" id="poInput" class="form-control" placeholder="VD: 414271" autocomplete="off" style="min-height:44px; max-width:200px;" />
+                    <input type="text" id="poInput" class="form-control" placeholder="VD: 414271" autocomplete="off" style="min-height:44px; max-width:200px;" value="@initialPo" />
                 </div>
                 <button type="button" id="btnFindReport" class="btn bg-gradient-info mb-0 px-4 d-flex align-items-center gap-1" style="min-height:44px;">
                     🔍 Tìm
@@ -156,6 +180,62 @@
         </div>
     </div>
 
+    <div class="col-12 mb-3" id="cardGroupsRow" style="display:none;">
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <div class="card border-radius-lg card-group-col">
+                    <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-start justify-content-between bg-gradient-secondary text-white border-radius-lg">
+                        <div>
+                            <div class="text-sm font-weight-bolder">🚚 ĐÃ OUT</div>
+                            <div class="text-xs opacity-8">Đã ra chuyền, hoàn tất</div>
+                        </div>
+                        <span class="badge bg-white text-dark" id="cntOut">0</span>
+                    </div>
+                    <div class="card-body p-2 card-group-body" id="listOut"></div>
+                    <div class="card-footer p-2 d-flex align-items-center justify-content-between card-group-pager" id="pagerOut" style="display:none;">
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0 pager-prev">‹ Trước</button>
+                        <span class="text-xs text-secondary pager-label"></span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0 pager-next">Sau ›</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card border-radius-lg card-group-col">
+                    <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-start justify-content-between bg-gradient-warning text-white border-radius-lg">
+                        <div>
+                            <div class="text-sm font-weight-bolder">⏳ ĐANG CHỜ NHẬN</div>
+                            <div class="text-xs opacity-8">Đã Set In, đang nhận hàng dở dang</div>
+                        </div>
+                        <span class="badge bg-white text-dark" id="cntPending">0</span>
+                    </div>
+                    <div class="card-body p-2 card-group-body" id="listPending"></div>
+                    <div class="card-footer p-2 d-flex align-items-center justify-content-between card-group-pager" id="pagerPending" style="display:none;">
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0 pager-prev">‹ Trước</button>
+                        <span class="text-xs text-secondary pager-label"></span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0 pager-next">Sau ›</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card border-radius-lg card-group-col">
+                    <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-start justify-content-between bg-gradient-dark text-white border-radius-lg">
+                        <div>
+                            <div class="text-sm font-weight-bolder">⬜ ĐÃ SET IN — CHƯA NHẬN HÀNG</div>
+                            <div class="text-xs opacity-8">Đã quét thẻ vào, chưa nhận part nào</div>
+                        </div>
+                        <span class="badge bg-white text-dark" id="cntNotStarted">0</span>
+                    </div>
+                    <div class="card-body p-2 card-group-body" id="listNotStarted"></div>
+                    <div class="card-footer p-2 d-flex align-items-center justify-content-between card-group-pager" id="pagerNotStarted" style="display:none;">
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0 pager-prev">‹ Trước</button>
+                        <span class="text-xs text-secondary pager-label"></span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0 pager-next">Sau ›</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-12">
         <div class="card border-radius-lg">
             <div class="card-body p-3">
@@ -177,5 +257,8 @@
 </div>
 
 @section Scripts {
+    <script>
+        window.byPoConfig = { initialPo: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(initialPo)) };
+    </script>
     <script src="~/js/pages/report-po.js" asp-append-version="true"></script>
 }

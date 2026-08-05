@@ -31,13 +31,28 @@ public class CompSttSetService
     {
         const string sql = @"
             SELECT BASKET_ID, I_CARD_NO, I_PO_NO, C_SIZE, C_STYLE, C_KEYINLOC,
-                   I_PARTS_NO, N_PARTS_NO, Q_PLAN, C_QTY, IS_IN, IN_DATE,
-                   IS_COMPLETE_SET, IS_OUT
+                   I_PARTS_NO, N_PARTS_NO, Q_PLAN, C_QTY, SET_QTY, IS_IN, IN_DATE,
+                   IS_COMPLETE_SET, IS_OUT, DATE_OUT, LINEOUT
             FROM MES.TRTB_M_COMPSTT_SET_HEADER
             WHERE BASKET_ID = :basketId
             ORDER BY I_CARD_NO";
 
         return await _db.ExecuteQueryAsync(sql, MapHeaderRow, new OracleParameter("basketId", basketId));
+    }
+
+    // Danh sách thẻ PCard theo PO — dùng cho Báo cáo theo PO, phân loại: đã Out / đang chờ nhận
+    // (đã Set In, có nhận 1 phần) / chưa nhận gì (SET_QTY=0).
+    public async Task<List<CompSttSetHeaderRow>> GetHeaderRowsByPoAsync(string po)
+    {
+        const string sql = @"
+            SELECT BASKET_ID, I_CARD_NO, I_PO_NO, C_SIZE, C_STYLE, C_KEYINLOC,
+                   I_PARTS_NO, N_PARTS_NO, Q_PLAN, C_QTY, SET_QTY, IS_IN, IN_DATE,
+                   IS_COMPLETE_SET, IS_OUT, DATE_OUT, LINEOUT
+            FROM MES.TRTB_M_COMPSTT_SET_HEADER
+            WHERE I_PO_NO = :po
+            ORDER BY I_CARD_NO";
+
+        return await _db.ExecuteQueryAsync(sql, MapHeaderRow, new OracleParameter("po", po));
     }
 
     public async Task<List<CompSttSetDetailRow>> GetBasketDetailAsync(int basketId)
@@ -203,10 +218,13 @@ public class CompSttSetService
         NPartsNo = r["N_PARTS_NO"] as string,
         QPlan = r["Q_PLAN"] == DBNull.Value ? 0 : Convert.ToInt32(r["Q_PLAN"]),
         CQty = r["C_QTY"] == DBNull.Value ? 0 : Convert.ToInt32(r["C_QTY"]),
+        SetQty = r["SET_QTY"] == DBNull.Value ? 0 : Convert.ToInt32(r["SET_QTY"]),
         IsIn = r["IS_IN"] as string,
         InDate = r["IN_DATE"] == DBNull.Value ? null : Convert.ToDateTime(r["IN_DATE"]),
         IsCompleteSet = r["IS_COMPLETE_SET"] as string,
-        IsOut = r["IS_OUT"] as string
+        IsOut = r["IS_OUT"] as string,
+        DateOut = r["DATE_OUT"] == DBNull.Value ? null : Convert.ToDateTime(r["DATE_OUT"]),
+        LineOut = r["LINEOUT"] as string
     };
 
     private static CompSttSetDetailRow MapDetailRow(OracleDataReader r) => new()

@@ -51,6 +51,25 @@ public class CompSttSetController : ControllerBase
         }
     }
 
+    [HttpGet("cards-by-po")]
+    public async Task<IActionResult> GetCardsByPo([FromQuery] string po)
+    {
+        if (string.IsNullOrWhiteSpace(po))
+        {
+            return BadRequest(new { success = false, message = "Thiếu tham số po" });
+        }
+
+        try
+        {
+            var rows = await _service.GetHeaderRowsByPoAsync(po.Trim());
+            return Ok(new { success = true, data = rows });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
     [HttpGet("detail")]
     public async Task<IActionResult> GetDetail([FromQuery] int basketId)
     {

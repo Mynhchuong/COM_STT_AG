@@ -35,6 +35,9 @@ public class CompSttSetHeaderRow
     [JsonPropertyName("C_QTY")]
     public int CQty { get; set; }
 
+    [JsonPropertyName("SET_QTY")]
+    public int SetQty { get; set; }
+
     [JsonPropertyName("IS_IN")]
     public string? IsIn { get; set; }
 
@@ -46,6 +49,12 @@ public class CompSttSetHeaderRow
 
     [JsonPropertyName("IS_OUT")]
     public string? IsOut { get; set; }
+
+    [JsonPropertyName("DATE_OUT")]
+    public DateTime? DateOut { get; set; }
+
+    [JsonPropertyName("LINEOUT")]
+    public string? LineOut { get; set; }
 }
 
 // 1 dòng / 1 part cần chuẩn bị trong basket (routing explosion)

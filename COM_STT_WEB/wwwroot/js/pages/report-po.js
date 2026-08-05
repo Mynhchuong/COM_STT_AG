@@ -14,6 +14,57 @@
         const sumPlanEl       = document.getElementById('sumPlan');
         const sumScanEl       = document.getElementById('sumScan');
 
+        const cardGroupsRow = document.getElementById('cardGroupsRow');
+        const cntOut          = document.getElementById('cntOut');
+        const cntPending       = document.getElementById('cntPending');
+        const cntNotStarted    = document.getElementById('cntNotStarted');
+
+        const CARDS_PAGE_SIZE = 10;
+
+        // Mỗi cột (Đã Out / Đang chờ nhận / Chưa nhận hàng) tự quản lý trang riêng — PO nhiều
+        // thẻ vẫn xem được gọn, không phải cuộn dài trong 1 khung nhỏ.
+        function createCardPager(listElId, pagerElId, countElId) {
+            const listEl = document.getElementById(listElId);
+            const pagerEl = document.getElementById(pagerElId);
+            const countEl = document.getElementById(countElId);
+            const prevBtn = pagerEl.querySelector('.pager-prev');
+            const nextBtn = pagerEl.querySelector('.pager-next');
+            const labelEl = pagerEl.querySelector('.pager-label');
+
+            let items = [];
+            let page = 1;
+
+            function render() {
+                countEl.textContent = items.length;
+                if (items.length === 0) {
+                    listEl.innerHTML = '<div class="card-group-empty">Chưa có thẻ nào</div>';
+                    pagerEl.style.display = 'none';
+                    return;
+                }
+
+                const totalPages = Math.max(1, Math.ceil(items.length / CARDS_PAGE_SIZE));
+                if (page > totalPages) page = totalPages;
+                const start = (page - 1) * CARDS_PAGE_SIZE;
+                const pageItems = items.slice(start, start + CARDS_PAGE_SIZE);
+
+                listEl.innerHTML = pageItems.map(cardItemHtml).join('');
+                pagerEl.style.display = totalPages > 1 ? 'flex' : 'none';
+                labelEl.textContent = `Trang ${page}/${totalPages}`;
+                prevBtn.disabled = page <= 1;
+                nextBtn.disabled = page >= totalPages;
+            }
+
+            prevBtn.addEventListener('click', function () { if (page > 1) { page--; render(); } });
+            nextBtn.addEventListener('click', function () {
+                const totalPages = Math.max(1, Math.ceil(items.length / CARDS_PAGE_SIZE));
+                if (page < totalPages) { page++; render(); }
+            });
+
+            return {
+                setItems: function (newItems) { items = newItems; page = 1; render(); }
+            };
+        }
+
         const ALL_SIZES = [];
         for (let i = 1; i <= 22; i++) {
             const n = String(i).padStart(2, '0');
@@ -108,6 +159,40 @@
             pivotBody.innerHTML = bodyHtml;
         }
 
+        function cardItemHtml(row) {
+            const lineOutHtml = row.IS_OUT === 'Y' && row.LINEOUT
+                ? `<div class="card-item-lineout">🚚 Line: <strong>${row.LINEOUT}</strong></div>`
+                : '';
+            return `
+                <a href="/Production2/Pending2?basketId=${row.BASKET_ID}" class="card-item">
+                    <div class="card-item-code">${row.I_CARD_NO || ''}</div>
+                    <div class="card-item-meta">${row.C_STYLE || ''} · Size ${row.C_SIZE || ''}</div>
+                    <div class="card-item-progress">${row.SET_QTY || 0}/${row.C_QTY || 0} pcs</div>
+                    ${lineOutHtml}
+                </a>`;
+        }
+
+        const pagerOut        = createCardPager('listOut', 'pagerOut', 'cntOut');
+        const pagerPending     = createCardPager('listPending', 'pagerPending', 'cntPending');
+        const pagerNotStarted  = createCardPager('listNotStarted', 'pagerNotStarted', 'cntNotStarted');
+
+        function renderCardGroups(rows) {
+            if (!rows || rows.length === 0) {
+                cardGroupsRow.style.display = 'none';
+                return;
+            }
+
+            const outCards = rows.filter(r => r.IS_OUT === 'Y');
+            const pendingCards = rows.filter(r => r.IS_OUT !== 'Y' && (r.SET_QTY || 0) > 0);
+            const notStartedCards = rows.filter(r => r.IS_OUT !== 'Y' && (r.SET_QTY || 0) === 0);
+
+            pagerOut.setItems(outCards);
+            pagerPending.setItems(pendingCards);
+            pagerNotStarted.setItems(notStartedCards);
+
+            cardGroupsRow.style.display = 'block';
+        }
+
         async function findReport() {
             const po = poInput.value.trim();
             if (!po) {
@@ -117,6 +202,7 @@
 
             showStatus('Đang tìm...', false);
             summaryRow.style.display = 'none';
+            cardGroupsRow.style.display = 'none';
             pivotTable.style.display = 'none';
             pivotEmpty.style.display = 'block';
             pivotEmpty.innerHTML = `
@@ -124,8 +210,16 @@
                 <p class="mt-2 mb-0">Đang tải dữ liệu...</p>`;
 
             try {
-                const res = await fetch('/Report/GetCompSttPoReport?po=' + encodeURIComponent(po));
+                const [res, cardsRes] = await Promise.all([
+                    fetch('/Report/GetCompSttPoReport?po=' + encodeURIComponent(po)),
+                    fetch('/Report/GetCardsByPo?po=' + encodeURIComponent(po))
+                ]);
                 const data = await res.json();
+                const cardsData = await cardsRes.json();
+
+                if (cardsRes.ok && cardsData.success) {
+                    renderCardGroups(cardsData.data);
+                }
 
                 if (res.ok && data.success && data.data && data.data.length > 0) {
                     buildSummary(data.data, po);
@@ -154,5 +248,10 @@
         poInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') { e.preventDefault(); findReport(); }
         });
+
+        // Nếu đến từ trang Báo cáo tổng (bấm vào cột PO) đã có sẵn PO — tự tìm luôn.
+        if (window.byPoConfig && window.byPoConfig.initialPo) {
+            findReport();
+        }
     });
 })();

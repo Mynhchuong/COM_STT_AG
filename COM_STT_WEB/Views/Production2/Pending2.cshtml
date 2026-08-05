@@ -39,6 +39,18 @@
         background: rgba(45, 206, 137, 0.12);
         color: #2dce89;
     }
+    .qty-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+        border-style: solid;
+    }
+
+    #basketOutBanner {
+        display: none;
+    }
+    #basketOutBanner.show {
+        display: flex;
+    }
 
     #numpadOverlay {
         display: none;
@@ -73,6 +85,32 @@
     .numpad-grid button { min-height: 56px; font-size: 1.3rem; font-weight: 700; border-radius: 10px; border: 1px solid #e9ecef; background: #f8f9fa; color: #344767; }
     .numpad-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
     .numpad-actions button { flex: 1; min-height: 48px; font-weight: 700; border-radius: 10px; border: none; }
+
+    /* Popup xác nhận tuỳ chỉnh — KHÔNG dùng confirm()/alert() gốc của trình duyệt (giao diện xấu,
+       không đồng bộ style, một số trình duyệt/webview trên máy quét PDA còn chặn hẳn). */
+    #confirmOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1060;
+        align-items: center;
+        justify-content: center;
+    }
+    #confirmOverlay.show { display: flex; }
+    .confirm-box {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        width: 340px;
+        max-width: 92vw;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+        text-align: center;
+    }
+    .confirm-box .confirm-icon { font-size: 2.2rem; }
+    .confirm-box .confirm-message { font-size: 0.95rem; color: #344767; font-weight: 600; margin: 0.75rem 0 1.1rem; }
+    .confirm-actions { display: flex; gap: 0.5rem; }
+    .confirm-actions button { flex: 1; min-height: 48px; font-weight: 700; border-radius: 10px; border: none; }
 
     #saveLoadingOverlay {
         display: none;
@@ -130,14 +168,23 @@
         </div>
     </div>
 
+    <div class="col-12 mb-2">
+        <div id="basketOutBanner" class="alert bg-gradient-secondary text-white mb-0 align-items-center gap-2 py-2">
+            🔒 Basket này đã Set Out — chỉ xem, không sửa số lượng nhận được nữa.
+        </div>
+    </div>
+
     <div class="col-12 mb-3" id="headerSection" style="display:none;">
         <div class="row" id="headerCards"></div>
     </div>
 
     <div class="col-12">
         <div class="card border-radius-lg">
-            <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-center justify-content-between">
+            <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <h6 class="mb-0 text-sm font-weight-bolder">Số lượng cần chuẩn bị theo Part</h6>
+                <button type="button" id="btnMarkAllDone" class="btn bg-gradient-success btn-sm mb-0 d-flex align-items-center gap-1" disabled>
+                    ✅ Nhận đủ tất cả
+                </button>
             </div>
             <div class="card-body p-2 p-md-3">
                 <div style="overflow:auto; max-height:70vh;">
@@ -188,6 +235,17 @@
         <div class="numpad-actions">
             <button type="button" id="numpadCancel" class="btn bg-gradient-secondary mb-0">Huỷ</button>
             <button type="button" id="numpadSave" class="btn bg-gradient-success mb-0">Lưu</button>
+        </div>
+    </div>
+</div>
+
+<div id="confirmOverlay">
+    <div class="confirm-box">
+        <div class="confirm-icon">❓</div>
+        <div class="confirm-message" id="confirmMessage">Xác nhận?</div>
+        <div class="confirm-actions">
+            <button type="button" id="confirmCancel" class="btn bg-gradient-secondary mb-0">Huỷ</button>
+            <button type="button" id="confirmOk" class="btn bg-gradient-success mb-0">Xác nhận</button>
         </div>
     </div>
 </div>

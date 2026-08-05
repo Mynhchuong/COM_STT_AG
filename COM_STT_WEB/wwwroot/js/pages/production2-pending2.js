@@ -22,8 +22,20 @@
         const numpadBackspace = document.getElementById('numpadBackspace');
 
         const saveLoadingOverlay = document.getElementById('saveLoadingOverlay');
+        const basketOutBanner = document.getElementById('basketOutBanner');
+        const btnMarkAllDone = document.getElementById('btnMarkAllDone');
+
+        const confirmOverlay = document.getElementById('confirmOverlay');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmOkBtn   = document.getElementById('confirmOk');
+        const confirmCancelBtn = document.getElementById('confirmCancel');
 
         let currentBasketId = null;
+        // true nếu BẤT KỲ thẻ nào trong basket (1-2 thẻ) đã Set Out — khoá không cho sửa nữa,
+        // khớp đúng logic chặn phía server (IsBasketOutAsync trong CompSttSetService).
+        let basketIsOut = false;
+        // Danh sách part của lần tải gần nhất — dùng cho nút "Nhận đủ tất cả".
+        let currentDetailRows = [];
 
         // Khoá toàn trang trong lúc đang lưu — không chỉ khoá riêng nút vừa bấm. Lý do: nếu chỉ khoá
         // 1 nút, bấm thêm ô khác trong lúc ô đầu đang lưu vẫn được, và khi ô đầu lưu xong nó render lại
@@ -50,6 +62,26 @@
             basketStatus.textContent = text;
             basketStatus.className = 'text-sm ms-2 ' + (isError ? 'text-danger font-weight-bold' : 'text-secondary');
         }
+
+        // Popup xác nhận riêng của app — KHÔNG dùng confirm() gốc trình duyệt. Trả về Promise<boolean>
+        // để dùng được kiểu "await showConfirm(...)" giống hệt cách gọi confirm() cũ.
+        let confirmResolver = null;
+        function showConfirm(message) {
+            confirmMessage.textContent = message;
+            confirmOverlay.classList.add('show');
+            return new Promise(function (resolve) {
+                confirmResolver = resolve;
+            });
+        }
+        function closeConfirm(result) {
+            confirmOverlay.classList.remove('show');
+            if (confirmResolver) {
+                confirmResolver(result);
+                confirmResolver = null;
+            }
+        }
+        confirmOkBtn.addEventListener('click', function () { closeConfirm(true); });
+        confirmCancelBtn.addEventListener('click', function () { closeConfirm(false); });
 
         function renderHeader(rows) {
             if (!rows || rows.length === 0) {
@@ -86,6 +118,9 @@
         }
 
         function renderDetail(rows) {
+            currentDetailRows = rows || [];
+            updateMarkAllDoneButton();
+
             if (!rows || rows.length === 0) {
                 detailTable.style.display = 'none';
                 detailEmpty.style.display = 'block';
@@ -100,6 +135,7 @@
                 const isDone = row.IS_DONE === 'Y';
                 const qty = row.QTY_RECEIVE || 0;
                 const hasValueClass = qty > 0 ? 'has-value' : '';
+                const disabledAttr = basketIsOut ? 'disabled' : '';
 
                 return `
                     <tr class="${isDone ? 'row-done' : ''}">
@@ -111,7 +147,7 @@
                         <td>${row.C_SIZE || ''}</td>
                         <td>${row.C_QTY || 0}</td>
                         <td>
-                            <button type="button" class="qty-btn ${hasValueClass}"
+                            <button type="button" class="qty-btn ${hasValueClass}" ${disabledAttr}
                                 data-parts="${row.I_PARTS_NO || ''}" data-qty="${qty}" data-cqty="${row.C_QTY || 0}">
                                 ${qty > 0 ? qty : '-'}
                             </button>
@@ -124,6 +160,59 @@
             detailEmpty.style.display = 'none';
             detailTable.style.display = 'table';
         }
+
+        // Nút "Nhận đủ tất cả": chỉ bật khi có ít nhất 1 part chưa nhận đủ VÀ basket chưa Out.
+        function updateMarkAllDoneButton() {
+            const hasRemaining = currentDetailRows.some(row => (row.C_QTY || 0) - (row.QTY_RECEIVE || 0) > 0);
+            btnMarkAllDone.disabled = basketIsOut || !hasRemaining || isSaving;
+        }
+
+        // Nhận đủ TẤT CẢ part còn thiếu trong 1 lần bấm — đỡ phải bấm từng ô một khi công nhân
+        // đã kiểm đủ hết hàng thật rồi. Gọi tuần tự (không song song) cho an toàn, xong mới tải lại.
+        async function markAllDone() {
+            const remainingParts = currentDetailRows.filter(row => (row.C_QTY || 0) - (row.QTY_RECEIVE || 0) > 0);
+            if (remainingParts.length === 0) return;
+            const ok = await showConfirm(`Xác nhận nhận đủ TẤT CẢ ${remainingParts.length} part còn thiếu trong basket này?`);
+            if (!ok) return;
+
+            btnMarkAllDone.disabled = true;
+            showSaveOverlay();
+            const errors = [];
+            try {
+                for (const row of remainingParts) {
+                    const partsNo = row.I_PARTS_NO;
+                    try {
+                        const res = await fetch(`/Production2/MarkBasketDetailDone?basketId=${currentBasketId}&partsNo=${encodeURIComponent(partsNo)}`, {
+                            method: 'POST',
+                            headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+                        });
+                        const data = await res.json();
+                        if (!(res.ok && data.success)) {
+                            errors.push(`${partsNo}: ${data.message || 'lỗi'}`);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        errors.push(`${partsNo}: lỗi kết nối`);
+                    }
+                }
+
+                await findBasket(currentBasketId, true);
+
+                if (errors.length === 0) {
+                    showStatus(`✓ Đã nhận đủ tất cả ${remainingParts.length} part.`, false);
+                    window.PdaHelper.feedback(true, 'Đã nhận đủ tất cả part.');
+                } else {
+                    const msg = `Xong ${remainingParts.length - errors.length}/${remainingParts.length} part — lỗi: ${errors.join('; ')}`;
+                    showStatus(msg, true);
+                    window.PdaHelper.feedback(false, msg);
+                }
+            } finally {
+                hideSaveOverlay();
+                updateMarkAllDoneButton();
+            }
+        }
+
+        btnMarkAllDone.addEventListener('click', markAllDone);
 
         async function findBasket(basketIdOverride, silent) {
             let basketId = basketIdOverride;
@@ -169,6 +258,8 @@
                 const detailData = await detailRes.json();
 
                 if (headerRes.ok && headerData.success) {
+                    basketIsOut = (headerData.data || []).some(h => h.IS_OUT === 'Y');
+                    basketOutBanner.classList.toggle('show', basketIsOut);
                     renderHeader(headerData.data);
                 }
                 if (detailRes.ok && detailData.success) {
