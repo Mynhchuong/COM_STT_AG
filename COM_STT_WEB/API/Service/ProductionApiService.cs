@@ -84,6 +84,16 @@ public class ProductionApiService
         return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
     }
 
+    public async Task<PartYieldUpdateResult> MarkPartsOutAsync(int basketId, List<string> partsNo, string outTo, string workerId)
+    {
+        var query = new List<string> { $"basketId={basketId}", $"outTo={Uri.EscapeDataString(outTo)}", $"workerId={Uri.EscapeDataString(workerId)}" };
+        query.AddRange(partsNo.Select(p => $"partsNo={Uri.EscapeDataString(p)}"));
+        var url = "api/compstt-set/mark-out?" + string.Join("&", query);
+        var response = await _httpClient.PostAsync(url, null);
+        var body = await response.Content.ReadFromJsonAsync<PartYieldUpdateApiResponse>();
+        return new PartYieldUpdateResult { Success = body?.Success ?? false, Message = body?.Message };
+    }
+
     public async Task<List<KeyinYieldLogItemModel>> GetTodayYieldAsync(string? worker, string? date = null)
     {
         var query = new List<string>();
@@ -207,9 +217,6 @@ public class KeyinYieldItemModel
 
     [JsonPropertyName("PCARD_NO")]
     public string? PcardNo { get; set; }
-
-    [JsonPropertyName("LINE_OUT")]
-    public string? LineOut { get; set; }
 }
 
 public class KeyinYieldLogItemModel
@@ -359,8 +366,14 @@ public class CompSttSetHeaderRowModel
     [JsonPropertyName("DATE_OUT")]
     public DateTime? DateOut { get; set; }
 
-    [JsonPropertyName("LINEOUT")]
-    public string? LineOut { get; set; }
+    [JsonPropertyName("PROCESS_OUT")]
+    public string? ProcessOut { get; set; }
+
+    [JsonPropertyName("PARTS_OUT")]
+    public int PartsOut { get; set; }
+
+    [JsonPropertyName("PARTS_TOTAL")]
+    public int PartsTotal { get; set; }
 }
 
 public class CompSttSetDetailRowModel
@@ -400,4 +413,10 @@ public class CompSttSetDetailRowModel
 
     [JsonPropertyName("WORKER_ID")]
     public string? WorkerId { get; set; }
+
+    [JsonPropertyName("OUT_TO")]
+    public string? OutTo { get; set; }
+
+    [JsonPropertyName("IS_OUT")]
+    public string? IsOut { get; set; }
 }

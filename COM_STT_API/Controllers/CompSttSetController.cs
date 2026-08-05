@@ -111,4 +111,18 @@ public class CompSttSetController : ControllerBase
             return StatusCode(500, new { success = false, message = ex.Message });
         }
     }
+
+    [HttpPost("mark-out")]
+    public async Task<IActionResult> MarkOut([FromQuery] int basketId, [FromQuery] List<string> partsNo, [FromQuery] string outTo, [FromQuery] string workerId)
+    {
+        try
+        {
+            var (success, message) = await _service.MarkPartsOutAsync(basketId, partsNo, outTo, workerId);
+            return Ok(new { success, message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
 }

@@ -3,34 +3,19 @@
 }
 
 <style>
-    :root {
-        --border-radius-custom: 16px;
-    }
-
-    .plant-btn.active {
-        background: #1a73e8 !important;
-        color: #fff !important;
-        border-color: #1a73e8 !important;
-    }
-
-    body {
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-    }
-
     #scan-reader {
         border: 4px solid #1a73e8;
         border-radius: 16px;
         overflow: hidden;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        max-width: 480px;
-        max-height: 320px;
+        max-width: 420px;
+        max-height: 300px;
         position: relative;
     }
     #scan-reader video,
     #scan-reader canvas {
         width: 100% !important;
-        max-height: 320px;
+        max-height: 300px;
         object-fit: cover;
     }
     #scan-reader.flash-success {
@@ -41,167 +26,230 @@
         border-color: #f5365c !important;
         box-shadow: 0 0 24px rgba(245, 54, 92, 0.85) !important;
     }
-
-    /* Đếm số thẻ nổi ngay trên khung camera — luôn thấy được khi đang quét, không cần cuộn xuống */
-    #scan-section {
-        position: relative;
-    }
-    #liveCountBadge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 5;
-        background: rgba(0,0,0,0.72);
-        color: #fff;
-        font-weight: 800;
-        font-size: 0.95rem;
-        padding: 6px 14px;
-        border-radius: 999px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        pointer-events: none;
-    }
-
-    /* Banner kết quả quét gần nhất — to, rõ, tự ẩn sau vài giây */
-    #scanStatusMsg {
-        font-size: 1rem;
-        min-height: 3rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: opacity 0.3s ease;
-    }
-
-    /* High-contrast Scanner Input for PDA */
-    #pcardInput {
-        font-size: 1.25rem !important;
+    #cardNoInput {
+        font-size: 1.1rem !important;
         font-weight: 800 !important;
-        min-height: 56px !important;
-        border-radius: var(--border-radius-custom) !important;
-        border: 2.5px solid #1a73e8 !important;
-        padding: 10px 16px !important;
-        letter-spacing: 1.5px;
+        min-height: 48px !important;
+        border-radius: 14px !important;
+        border: 2px solid #1a73e8 !important;
+        letter-spacing: 1px;
         text-transform: uppercase;
-        background-color: #fff !important;
     }
-    #pcardInput:focus {
+    #cardNoInput:focus {
         border-color: #0d47a1 !important;
-        box-shadow: 0 0 0 4px rgba(26,115,232,0.3) !important;
+        box-shadow: 0 0 0 4px rgba(26,115,232,0.25) !important;
         outline: none;
     }
 
-    #btnAddManual {
+    #basketDetailTable {
+        border-collapse: separate;
+        border-spacing: 0;
+        white-space: nowrap;
+        font-size: 0.95rem;
+    }
+    #basketDetailTable th, #basketDetailTable td {
+        padding: 0.65rem 0.7rem;
+        border-bottom: 1px solid #e9ecef;
+        text-align: center;
+    }
+    #basketDetailTable thead th {
+        background: #344767;
+        color: #fff;
+        font-weight: 700;
+    }
+    #basketDetailTable td.col-part-name { text-align: left; white-space: normal; }
+    #basketDetailTable td.col-meta { text-align: left; white-space: normal; color: #67748e; font-size: 0.85rem; }
+    #basketDetailTable tr.row-out td { background: rgba(45, 206, 137, 0.06); }
+    #basketDetailTable tr.row-locked td { background: rgba(140, 140, 140, 0.06); color: #adb5bd; }
+
+    .row-check {
+        width: 22px;
+        height: 22px;
+        cursor: pointer;
+        vertical-align: middle;
+    }
+    .row-check:disabled { cursor: not-allowed; }
+    #basketDetailTable td.col-check .check-label { display: none; }
+
+    /* Màn hình nhỏ (điện thoại): bảng chuyển thành danh sách thẻ xếp dọc — mỗi part 1 khối. */
+    @@media (max-width: 767.98px) {
+        #basketDetailTable, #basketDetailTable tbody, #basketDetailTable tr, #basketDetailTable td {
+            display: block;
+            width: 100%;
+        }
+        #basketDetailTable thead { display: none; }
+        #basketDetailTable tr {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 0.65rem;
+            padding: 0.6rem 0.85rem;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.06);
+        }
+        #basketDetailTable tr.row-out { border-color: rgba(45, 206, 137, 0.5); }
+        #basketDetailTable tr.row-locked { border-color: rgba(140,140,140,0.35); }
+        #basketDetailTable td {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            border-bottom: 1px dashed #f1f3f5;
+            padding: 0.4rem 0;
+            text-align: right;
+            white-space: normal;
+        }
+        #basketDetailTable td:last-child { border-bottom: none; }
+        #basketDetailTable td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: #8898aa;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            text-align: left;
+            flex-shrink: 0;
+        }
+        #basketDetailTable td.col-part-name {
+            display: block;
+            text-align: left;
+            font-size: 1rem;
+            padding-bottom: 0.5rem;
+        }
+        #basketDetailTable td.col-part-name::before { display: none; }
+
+        /* Ô "Chọn" đưa lên đầu thẻ, to rõ, kèm chữ giải thích — dễ bấm và dễ hiểu hơn là chỉ có
+           1 ô vuông nhỏ nằm lẫn trong danh sách thông số. */
+        #basketDetailTable td.col-check {
+            order: -1;
+            justify-content: flex-start;
+            gap: 0.6rem;
+            padding-bottom: 0.6rem;
+            margin-bottom: 0.4rem;
+            border-bottom: 1px dashed #f1f3f5;
+        }
+        #basketDetailTable td.col-check::before { display: none; }
+        #basketDetailTable td.col-check .row-check { width: 28px; height: 28px; }
+        #basketDetailTable td.col-check .check-label {
+            display: inline;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #344767;
+        }
+
+        /* Khối chọn Nhà/Line: xếp 2 cột đều nhau cho dễ bấm, Line xuống hàng riêng full-width. */
+        #destinationSection .card-body { padding: 0.75rem 0.9rem; }
+        #destinationSection > .card-body > div {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        .nha-btn { width: 100%; }
+        #lineSelect:not(.d-none) { grid-column: 1 / -1; max-width: 100% !important; width: 100%; }
+
+        #pageHeaderCard .card-body { padding: 0.75rem 0.9rem; }
+        #pageHeaderCard .icon.icon-shape { width: 34px; height: 34px; min-width: 34px; font-size: 1.05rem; }
+        #pageHeaderCard h5 { font-size: 0.95rem; }
+        #pageHeaderCard .btn-sm { padding: 0.4rem 0.65rem; font-size: 0.72rem; min-height: 0 !important; }
+
+        .header-info-card .card-body { padding: 0.7rem 0.9rem; }
+        .header-info-card strong.text-md { font-size: 0.92rem; }
+        .header-info-card .badge { font-size: 0.62rem; padding: 0.35rem 0.55rem; }
+        .header-info-card .text-xs { font-size: 0.72rem; line-height: 1.5; }
+
+        .nha-btn { min-height: 52px !important; font-size: 1rem !important; }
+    }
+
+    .nha-btn {
+        min-width: 76px;
         min-height: 56px;
-        min-width: 60px;
-        border-radius: var(--border-radius-custom);
-    }
-
-    /* Giant Save Button Sticky for Mobile */
-    .sticky-save-bar {
-        position: sticky;
-        bottom: 12px;
-        z-index: 100;
-        background: rgba(255,255,255,0.92);
-        backdrop-filter: blur(10px);
-        padding: 12px 16px;
-        border-radius: 20px;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
-        border: 1px solid #e9ecef;
-    }
-
-    #btnSaveSetOut {
-        min-height: 64px;
-        font-size: 1.25rem;
+        font-size: 1.15rem;
         font-weight: 800;
-        letter-spacing: 0.5px;
-        border-radius: 14px;
-        box-shadow: 0 6px 20px rgba(26,115,232,0.4);
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        background: #f8f9fa;
+        color: #67748e;
     }
-    #btnSaveSetOut:active {
-        transform: scale(0.97);
-    }
-
-    /* Scanned Card Row / Mobile Item */
-    .scanned-item-card {
-        background: #fff;
-        border-radius: 14px;
-        padding: 14px 16px;
-        margin-bottom: 10px;
-        border: 1px solid #e9ecef;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: all 0.2s ease;
-    }
-    .scanned-item-card.new-added {
+    .nha-btn.active {
         border-color: #1a73e8;
-        background: rgba(26, 115, 232, 0.10);
-        animation: cardPulse 1.2s ease;
+        background: rgba(26, 115, 232, 0.12);
+        color: #1a73e8;
     }
-    @@keyframes cardPulse {
-        from { transform: scale(1.02); }
-        to   { transform: scale(1); }
+    .nha-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #confirmOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1060;
+        align-items: center;
+        justify-content: center;
     }
+    #confirmOverlay.show { display: flex; }
+    .confirm-box {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        width: 340px;
+        max-width: 92vw;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+        text-align: center;
+    }
+    .confirm-box .confirm-icon { font-size: 2.2rem; }
+    .confirm-box .confirm-message { font-size: 0.95rem; color: #344767; font-weight: 600; margin: 0.75rem 0 1.1rem; white-space: pre-line; }
+    .confirm-actions { display: flex; gap: 0.5rem; }
+    .confirm-actions button { flex: 1; min-height: 48px; font-weight: 700; border-radius: 10px; border: none; }
+
+    #saveLoadingOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(255,255,255,0.55);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    #saveLoadingOverlay.show { display: flex; }
+    #saveLoadingOverlay .spinner-border { width: 3rem; height: 3rem; }
 </style>
 
 <div class="row">
-    <!-- HEADER -->
     <div class="col-12 mb-3">
-        <div class="card bg-gradient-info border-radius-lg text-white">
+        <div id="pageHeaderCard" class="card bg-gradient-info border-radius-lg text-white">
             <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <div class="d-flex align-items-center gap-3">
                     <div class="icon icon-shape bg-white text-info shadow border-radius-md d-flex align-items-center justify-content-center">
                         🚪
                     </div>
                     <div>
-                        <h5 class="text-white font-weight-bolder mb-0">SET OUT — Ra Chuyền</h5>
+                        <h5 class="text-white font-weight-bolder mb-0">SET OUT — Ra Chuyền theo Part</h5>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <a asp-controller="Home" asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
                         🏠 Trang chủ
                     </a>
-                    <a asp-action="Index" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
-                        ⬅️ Set In/Out
+                    <a asp-action="SetIn" class="btn btn-outline-white btn-sm mb-0 d-inline-flex align-items-center gap-1">
+                        📷 Set In
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- CHỌN LINE NHẬN HÀNG (PLANT + LINE) — bắt buộc chọn trước khi Lưu -->
-    <div class="col-12 mb-3">
-        <div class="card border-radius-lg">
-            <div class="card-body p-3">
-                <label class="text-xs font-weight-bolder text-dark mb-2 d-block">Chọn Line nhận hàng (bắt buộc trước khi Lưu)</label>
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <div class="btn-group" role="group" id="plantGroup">
-                        <button type="button" class="btn btn-outline-info plant-btn" data-plant="B">PLANT B</button>
-                        <button type="button" class="btn btn-outline-info plant-btn" data-plant="E">PLANT E</button>
-                    </div>
-                    <select id="lineSelect" class="form-control" style="max-width:140px; min-height:38px;">
-                        <option value="">-- Line --</option>
-                    </select>
-                    <span id="lineOutDisplay" class="badge bg-gradient-info text-md px-3 py-2 d-none"></span>
-                </div>
-            </div>
-        </div>
-    </div>
+    @Html.AntiForgeryToken()
 
-    <!-- CỘT TRÁI: CAMERA QUÉT + Ô NHẬP TAY / SÚNG PDA -->
-    <div class="col-12 col-lg-5 mb-4">
+    <div class="col-12 col-md-8 col-lg-6 mx-auto mb-3">
         <div class="card border-radius-lg">
             <div class="card-header pb-0 ps-3 pt-3">
                 <h6 class="mb-0 text-sm font-weight-bolder d-flex align-items-center gap-2">
-                    📷
-                    Quét Mã PCard (Camera & Súng Bắn)
+                    📷 Quét mã PCard
                 </h6>
-                <p class="text-xs text-secondary mb-0">Hỗ trợ camera thoại hoặc súng đọc mã vạch PDA</p>
+                <p class="text-xs text-secondary mb-0">Dùng Camera, súng bắn mã vạch PDA, hoặc nhập tay mã PCard.</p>
             </div>
             <div class="card-body p-3 text-center">
-
-                <!-- 1. CHỨC NĂNG QUÉT CAMERA -->
-                <div class="mb-4">
+                <div class="mb-3">
                     <div id="idle-section" class="py-4 bg-light border-radius-lg border border-dashed border-2">
                         📸
                         <p class="text-secondary text-xs mb-3">Bấm nút bên dưới để mở Camera quét mã vạch / QR</p>
@@ -209,11 +257,8 @@
                             📷 BẮT ĐẦU QUÉT CAMERA
                         </button>
                     </div>
-
                     <div id="scan-section" class="d-none">
-                        <div id="scan-reader" class="mx-auto bg-black">
-                            <span id="liveCountBadge">0 thẻ</span>
-                        </div>
+                        <div id="scan-reader" class="mx-auto bg-black"></div>
                         <div class="d-flex justify-content-center gap-2 mt-3">
                             <button id="btn-stop-scan" type="button" class="btn btn-outline-danger mb-0 d-inline-flex align-items-center gap-1 px-4 py-2" style="border-radius:12px;">
                                 📵 Tắt Camera
@@ -222,59 +267,68 @@
                     </div>
                 </div>
 
-                <!-- SCAN STATUS FEEDBACK BANNER — kết quả quét gần nhất, tự ẩn sau ~5s -->
-                <div id="scanStatusMsg" class="font-weight-bolder text-center py-2 px-3 border-radius-md mb-3" style="display:none;"></div>
-
-                <!-- SUMMARY COUNTERS CARD -->
-                <div class="card bg-gray-100 border-radius-md p-3 mb-3">
-                    <div class="row text-center g-2">
-                        <div class="col-6 border-end">
-                            <span class="text-xs text-secondary font-weight-bold d-block">TỔNG SỐ THẺ</span>
-                            <strong class="text-2xl text-dark" id="statCardCount">0</strong> <span class="text-xs text-secondary">thẻ</span>
-                        </div>
-                        <div class="col-6">
-                            <span class="text-xs text-secondary font-weight-bold d-block">TỔNG SỐ LƯỢNG</span>
-                            <strong class="text-2xl text-info" id="statTotalQty">0</strong> <span class="text-xs text-secondary">pcs</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. SÚNG BẮN MÃ VẠCH PDA HOẶC NHẬP TAY -->
                 <div class="border-top pt-3 text-start">
-                    <label for="pcardInput" class="text-xs font-weight-bolder text-dark mb-1 d-block">Hoặc Bắn súng mã vạch PDA / Nhập tay</label>
-                    <div class="d-flex gap-2 mb-3">
-                        <input type="text" id="pcardInput" class="form-control" placeholder="BẮN MÃ PCARD VÀO ĐÂY..." autocomplete="off" inputmode="text" />
-                        <button type="button" id="btnAddManual" class="btn bg-gradient-dark mb-0 px-3 d-flex align-items-center justify-content-center">
-                            📤
+                    <label for="cardNoInput" class="text-xs font-weight-bolder text-dark mb-1 d-block">Hoặc Bắn súng mã vạch PDA / Nhập tay</label>
+                    <div class="d-flex gap-2">
+                        <input type="text" id="cardNoInput" class="form-control" placeholder="VD: PAB6714002494" autocomplete="off" inputmode="text" />
+                        <button type="button" id="btnFindBasket" class="btn bg-gradient-info mb-0 px-3" style="min-height:48px;">
+                            🔍 Tìm
                         </button>
                     </div>
                 </div>
 
-                <!-- CLEAR BATCH BUTTON -->
-                <button type="button" id="btnClearBatch" class="btn btn-outline-danger w-100 mb-0 d-flex align-items-center justify-content-center gap-1" style="border-radius:12px;">
-                    🔁 Xóa danh sách làm lại
-                </button>
+                <div id="basketStatus" class="text-sm text-secondary mt-2"></div>
             </div>
         </div>
     </div>
 
-    <!-- CỘT PHẢI: DANH SÁCH THẺ ĐÃ QUÉT HÀNG LOẠT -->
-    <div class="col-12 col-lg-7 mb-4">
+    <div class="col-12 mb-3" id="headerSection" style="display:none;">
+        <div class="row" id="headerCards"></div>
+    </div>
+
+    <div class="col-12 mb-3" id="destinationSection" style="display:none;">
         <div class="card border-radius-lg">
-            <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-center justify-content-between">
-                <div>
-                    <h6 class="mb-0 text-sm font-weight-bolder d-flex align-items-center gap-2">
-                        📋
-                        Danh sách PCard đã đọc (Hàng loạt)
-                    </h6>
+            <div class="card-body p-3">
+                <label class="text-xs font-weight-bolder text-dark mb-2 d-block">Out cho Nhà nào? (áp dụng cho các part đã tick bên dưới)</label>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <button type="button" class="btn nha-btn" data-nha="A">NHÀ A</button>
+                    <button type="button" class="btn nha-btn" data-nha="B">NHÀ B</button>
+                    <button type="button" class="btn nha-btn" data-nha="C">NHÀ C</button>
+                    <button type="button" class="btn nha-btn" data-nha="E">NHÀ E</button>
+                    <select id="lineSelect" class="form-control d-none" style="max-width:160px; min-height:44px;">
+                        <option value="">-- Chọn Line --</option>
+                    </select>
                 </div>
-                <span class="badge bg-gradient-info text-md px-3 py-2" id="scannedBadge">0 thẻ</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card border-radius-lg">
+            <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="mb-0 text-sm font-weight-bolder">Chi tiết Part trong Basket</h6>
+                <button type="button" id="btnConfirmOut" class="btn bg-gradient-info btn-sm mb-0 d-flex align-items-center gap-1" disabled>
+                    🚪 Xác nhận Out
+                </button>
             </div>
             <div class="card-body p-2 p-md-3">
-                <div id="scannedListContainer" style="max-height: 520px; overflow-y: auto;">
-                    <div class="text-center py-5 text-secondary text-sm" id="emptyMsg">
-                        🔲
-                        <p class="mb-0">Chưa đọc mã PCard nào. Bấm nút Mở Camera hoặc dùng súng bắn vạch!</p>
+                <div style="overflow:auto; max-height:70vh;">
+                    <table id="basketDetailTable" class="mb-0 w-100" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th style="width:44px;">Chọn</th>
+                                <th class="col-part-name">Part No / Tên Part</th>
+                                <th class="col-meta">PO / Style / Size</th>
+                                <th>Cần</th>
+                                <th>Đã nhận</th>
+                                <th>Trạng thái Out</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailBody"></tbody>
+                    </table>
+                    <div id="detailEmpty" class="text-center py-5 text-secondary text-sm">
+                        📊
+                        <p class="mb-0">Quét hoặc nhập mã PCard rồi bấm Tìm.</p>
                     </div>
                 </div>
             </div>
@@ -282,375 +336,24 @@
     </div>
 </div>
 
-@Html.AntiForgeryToken()
+<div id="confirmOverlay">
+    <div class="confirm-box">
+        <div class="confirm-icon">❓</div>
+        <div class="confirm-message" id="confirmMessage">Xác nhận?</div>
+        <div class="confirm-actions">
+            <button type="button" id="confirmCancel" class="btn bg-gradient-secondary mb-0">Huỷ</button>
+            <button type="button" id="confirmOk" class="btn bg-gradient-success mb-0">Xác nhận</button>
+        </div>
+    </div>
+</div>
 
-<!-- BAR CỐ ĐỊNH NÚT LƯU Ở ĐÁY MÀN HÌNH -->
-<div class="sticky-save-bar my-3">
-    <button type="button" id="btnSaveSetOut" class="btn bg-gradient-info w-100 mb-0 d-flex align-items-center justify-content-center gap-2">
-        💾
-        <span id="btnSaveText">LƯU DỮ LIỆU SET OUT</span>
-    </button>
+<div id="saveLoadingOverlay">
+    <div class="spinner-border text-info" role="status"></div>
+    <div class="text-dark font-weight-bold">Đang lưu...</div>
 </div>
 
 @section Scripts {
     <script src="~/lib/html5-qrcode/dist/html5-qrcode.min.js" asp-append-version="true"></script>
     <script src="~/assets/js/global-function.js" asp-append-version="true"></script>
-    <script>
-    (function () {
-        const WEB_BASE = '@Url.Content("~/Production2")';
-
-        // Chọn Line nhận hàng (Plant B/E + số Line 01-30) — bắt buộc trước khi Lưu Set Out
-        const plantButtons  = document.querySelectorAll('.plant-btn');
-        const lineSelect    = document.getElementById('lineSelect');
-        const lineOutDisplay = document.getElementById('lineOutDisplay');
-        let selectedPlant = null;
-        let currentLineOut = null;
-
-        function updateLineOutDisplay() {
-            if (selectedPlant && lineSelect.value) {
-                currentLineOut = `${selectedPlant}-${lineSelect.value}`;
-                lineOutDisplay.textContent = currentLineOut;
-                lineOutDisplay.classList.remove('d-none');
-            } else {
-                currentLineOut = null;
-                lineOutDisplay.classList.add('d-none');
-            }
-        }
-
-        plantButtons.forEach(btn => {
-            btn.addEventListener('click', function () {
-                selectedPlant = btn.dataset.plant;
-                plantButtons.forEach(b => b.classList.toggle('active', b === btn));
-
-                lineSelect.innerHTML = '<option value="">-- Line --</option>';
-                for (let i = 1; i <= 30; i++) {
-                    const n = String(i).padStart(2, '0');
-                    lineSelect.innerHTML += `<option value="${n}">${selectedPlant}-${n}</option>`;
-                }
-                updateLineOutDisplay();
-            });
-        });
-
-        lineSelect.addEventListener('change', updateLineOutDisplay);
-
-        // State: danh sách PCard đã quét
-        const scannedList = [];
-
-        const pcardInput       = document.getElementById('pcardInput');
-        const btnAddManual     = document.getElementById('btnAddManual');
-        const scanStatusMsg    = document.getElementById('scanStatusMsg');
-        const statCardCount    = document.getElementById('statCardCount');
-        const statTotalQty     = document.getElementById('statTotalQty');
-        const scannedBadge     = document.getElementById('scannedBadge');
-        const liveCountBadge   = document.getElementById('liveCountBadge');
-        const listContainer    = document.getElementById('scannedListContainer');
-        const btnSave          = document.getElementById('btnSaveSetOut');
-        const btnClear         = document.getElementById('btnClearBatch');
-
-        const btnStartScan     = document.getElementById('btn-start-scan');
-        const btnStopScan      = document.getElementById('btn-stop-scan');
-        const idleSection      = document.getElementById('idle-section');
-        const scanSection      = document.getElementById('scan-section');
-        const scanReaderEl     = document.getElementById('scan-reader');
-
-        let html5QrCode = null;
-        let isCameraRunning = false;
-
-        // Banner kết quả quét gần nhất — hiện rõ, tự ẩn sau ~5s để không "đứng hình" trên màn hình
-        let statusHideTimer = null;
-        function showScanStatus(success, message) {
-            if (window.PdaHelper) {
-                PdaHelper.feedback(success, message, { flashEl: scanReaderEl, statusEl: scanStatusMsg });
-            }
-            scanStatusMsg.style.removeProperty('display');
-            if (statusHideTimer) clearTimeout(statusHideTimer);
-            statusHideTimer = setTimeout(function () {
-                scanStatusMsg.style.setProperty('display', 'none', 'important');
-            }, 5000);
-        }
-
-        // 1. KHỞI TẠO CAMERA SCANNER
-        btnStartScan.addEventListener('click', async function () {
-            // Mở khoá tiếng BEEP ngay trong cú chạm thật này (bắt buộc trên iOS Safari/Zalo webview)
-            if (window.PdaHelper) window.PdaHelper.unlockAudio();
-
-            idleSection.classList.add('d-none');
-            scanSection.classList.remove('d-none');
-
-            try {
-                if (!html5QrCode) {
-                    html5QrCode = new Html5Qrcode("scan-reader");
-                }
-
-                const qrConfig = {
-                    fps: 15,
-                    qrbox: { width: 260, height: 260 }
-                };
-
-                await html5QrCode.start(
-                    { facingMode: "environment" },
-                    qrConfig,
-                    onCameraScanSuccess,
-                    onCameraScanError
-                );
-                isCameraRunning = true;
-            } catch (err) {
-                console.error("Lỗi mở camera:", err);
-                alert("Không thể truy cập camera thiết bị! Vui lòng cấp quyền truy cập camera trong trình duyệt.");
-                stopCamera();
-            }
-        });
-
-        btnStopScan.addEventListener('click', stopCamera);
-
-        async function stopCamera() {
-            if (html5QrCode && isCameraRunning) {
-                try {
-                    await html5QrCode.stop();
-                } catch (e) {
-                    console.warn("Stop camera error:", e);
-                }
-                isCameraRunning = false;
-            }
-            scanSection.classList.add('d-none');
-            idleSection.classList.remove('d-none');
-        }
-
-        let lastScannedCode = '';
-        let lastScanTime = 0;
-
-        function onCameraScanSuccess(decodedText) {
-            const now = Date.now();
-            if (decodedText === lastScannedCode && (now - lastScanTime < 2500)) {
-                return; // chống trùng lặp lặp lại nhiều lần trong 2.5s
-            }
-            lastScannedCode = decodedText;
-            lastScanTime = now;
-
-            processScannedPcard(decodedText);
-        }
-
-        function onCameraScanError(errorMessage) {
-            // bỏ qua log đọc dở dang hàng khung hình
-        }
-
-        // 2. KHỞI TẠO SÚNG BẮN VẠCH PDA
-        if (window.PdaHelper) {
-            window.PdaHelper.initScanner('pcardInput', function (code) {
-                processScannedPcard(code);
-            });
-        }
-
-        btnAddManual.addEventListener('click', function () {
-            if (window.PdaHelper) window.PdaHelper.unlockAudio();
-            const code = pcardInput.value.trim().toUpperCase();
-            if (code) {
-                processScannedPcard(code);
-                pcardInput.value = '';
-                pcardInput.focus();
-            }
-        });
-
-        // Mã đang tra cứu dở (chưa kịp thêm vào scannedList) — chặn race condition khi camera
-        // quét lại cùng 1 mã trong lúc lần tra cứu trước còn đang chờ API trả lời (VD: DB link chậm).
-        const pendingLookups = new Set();
-
-        // 3. XỬ LÝ KHI ĐỌC 1 MÃ PCARD
-        async function processScannedPcard(code) {
-            const pcardNo = code.trim().toUpperCase();
-            if (!pcardNo) return;
-
-            // Kiểm tra trùng trong danh sách vừa đọc
-            if (scannedList.some(item => item.pcardNo === pcardNo)) {
-                showScanStatus(false, `PCard ${pcardNo} đã có trong danh sách vừa đọc!`);
-                return;
-            }
-            if (pendingLookups.has(pcardNo)) {
-                return; // đang tra cứu dở cho mã này, bỏ qua các lần quét trùng trong lúc chờ
-            }
-            pendingLookups.add(pcardNo);
-
-            try {
-                // Tra cứu thông tin kế hoạch qua API proxy
-                const res = await fetch(WEB_BASE + '/GetPcardInfo?cardNo=' + encodeURIComponent(pcardNo));
-                const data = await res.json();
-
-                if (res.ok && data.success && data.data) {
-                    const plan = data.data;
-                    const item = {
-                        pcardNo:   pcardNo,
-                        style:     plan.C_STYLE || plan.cStyle || 'N/A',
-                        size:      plan.C_SIZE || plan.cSize || 'N/A',
-                        order:     plan.I_PO_NO || plan.iPoNo || 'N/A',
-                        poNum:     plan.C_PO_NUM || plan.cPoNum || '',
-                        partsNo:   plan.I_PARTS_NO || plan.iPartsNo || 'N/A',
-                        partsName: plan.C_PARTS || plan.cParts || 'VAMP',
-                        width:     plan.C_WIDTH || plan.cWidth || null,
-                        qty:       plan.Q_QTY || plan.qQty || 0,
-                        qPlan:     plan.Q_PLAN || plan.qPlan || 0,
-                        groupSum:  plan.MES_GROUP_SUM || plan.mesGroupSum || ''
-                    };
-
-                    scannedList.unshift(item); // thêm vào đầu danh sách
-                    renderScannedList();
-                    updateCounters();
-
-                    showScanStatus(true, `✓ Đã đọc PCard ${pcardNo} — ${item.qty} pcs (tổng ${scannedList.length} thẻ)`);
-                } else {
-                    showScanStatus(false, data.message || `Không tìm thấy thông tin PCard ${pcardNo}`);
-                }
-            } catch (err) {
-                console.error(err);
-                showScanStatus(false, 'Lỗi kết nối khi tra cứu PCard!');
-            } finally {
-                pendingLookups.delete(pcardNo);
-            }
-        }
-
-        // Render danh sách các thẻ đã quét
-        function renderScannedList() {
-            if (scannedList.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="text-center py-5 text-secondary text-sm" id="emptyMsg">
-                        🔲
-                        <p class="mb-0">Chưa đọc mã PCard nào. Bấm nút Mở Camera hoặc dùng súng bắn vạch!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            listContainer.innerHTML = scannedList.map((item, idx) => `
-                <div class="scanned-item-card ${idx === 0 ? 'new-added' : ''}">
-                    <div>
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <span class="badge bg-dark text-white">#${scannedList.length - idx}</span>
-                            <strong class="text-md text-dark">${item.pcardNo}</strong>
-                            ${item.groupSum ? `<span class="badge bg-gradient-info text-white">${item.groupSum}</span>` : ''}
-                        </div>
-                        <div class="text-xs text-secondary">
-                            Style: <strong class="text-dark">${item.style}</strong> · Size: <strong class="text-dark">${item.size}</strong> · Order: <strong class="text-dark">${item.order}</strong>
-                        </div>
-                        <div class="text-xs text-secondary">
-                            Parts No: ${item.partsNo} · Số lượng: <strong class="text-primary text-sm">${item.qty} pcs</strong>
-                        </div>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-link text-danger p-2 mb-0 btn-remove-item" data-code="${item.pcardNo}">
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-
-            listContainer.querySelectorAll('.btn-remove-item').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const code = btn.dataset.code;
-                    const index = scannedList.findIndex(i => i.pcardNo === code);
-                    if (index !== -1) {
-                        scannedList.splice(index, 1);
-                        renderScannedList();
-                        updateCounters();
-                        if (window.PdaHelper) PdaHelper.vibrate(false);
-                    }
-                });
-            });
-        }
-
-        function updateCounters() {
-            const count = scannedList.length;
-            const totalQty = scannedList.reduce((sum, item) => sum + item.qty, 0);
-
-            statCardCount.textContent = count;
-            statTotalQty.textContent = totalQty;
-            scannedBadge.textContent = count + ' thẻ · ' + totalQty + ' pcs';
-            if (liveCountBadge) liveCountBadge.textContent = count + ' thẻ · ' + totalQty + ' pcs';
-        }
-
-        btnClear.addEventListener('click', function () {
-            if (scannedList.length === 0) return;
-            if (confirm('Bạn có chắc muốn xóa toàn bộ danh sách vừa đọc?')) {
-                scannedList.length = 0;
-                renderScannedList();
-                updateCounters();
-                if (statusHideTimer) clearTimeout(statusHideTimer);
-                scanStatusMsg.style.setProperty('display', 'none', 'important');
-            }
-        });
-
-        function getAntiForgeryToken() {
-            const el = document.querySelector('input[name="__RequestVerificationToken"]');
-            return el ? el.value : '';
-        }
-
-        // NÚT SAVE SET OUT — GỬI DỮ LIỆU ĐỂ LƯU VÀO MES.TRTB_M_KEYIN_YIELD (CHỈ BẢNG NÀY,
-        // KHÔNG nổ routing/part vào TRTB_M_KEYIN_PART_YIELD như Set In, và KHÔNG chuyển
-        // sang trang Chờ Set In — chỉ báo lưu thành công rồi ở lại trang để quét đợt tiếp).
-        btnSave.addEventListener('click', async function () {
-            if (scannedList.length === 0) {
-                showScanStatus(false, 'Chưa có thẻ PCard nào trong danh sách để lưu!');
-                return;
-            }
-            if (!currentLineOut) {
-                showScanStatus(false, 'Vui lòng chọn Plant + Line nhận hàng trước khi Lưu!');
-                return;
-            }
-
-            btnSave.disabled = true;
-            btnSaveText.textContent = 'ĐANG LƯU VÀO CƠ SỞ DỮ LIỆU...';
-            btnSave.classList.add('opacity-75');
-
-            const payload = scannedList.map(item => ({
-                C_ACTION:    'OUTPUT',
-                C_KEYINLOC:  'CUT_2',
-                C_KEYINPART: item.partsName || 'VAMP',
-                C_PO_NUM:    item.poNum || '',
-                C_ORD_NO:    item.order || '',
-                C_WIDTH:     item.width || null,
-                C_STYLE:     item.style || '',
-                C_SIZE:      item.size || '',
-                Q_QTY:       item.qty || 0,
-                Q_PLAN:      item.qPlan || 0,
-                PCARD_NO:    item.pcardNo || '',
-                LINE_OUT:    currentLineOut
-            }));
-
-            try {
-                const res = await fetch(WEB_BASE + '/SaveYieldBatch', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': getAntiForgeryToken()
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    const count = data.count || 0;
-                    const totalScanned = scannedList.length;
-
-                    scannedList.length = 0;
-                    renderScannedList();
-                    updateCounters();
-
-                    let msg = count > 0 ? `✓ Set Out thành công ${count}/${totalScanned} thẻ PCard!` : 'Không có thẻ nào đủ điều kiện Set Out.';
-                    if (data.outputErrors && data.outputErrors.length > 0) {
-                        msg += ' — ' + data.outputErrors.join(' | ');
-                    }
-                    showScanStatus(count > 0, msg);
-                } else {
-                    showScanStatus(false, data.message || 'Lỗi khi lưu dữ liệu vào cơ sở dữ liệu!');
-                }
-            } catch (err) {
-                console.error(err);
-                showScanStatus(false, 'Không thể kết nối đến máy chủ khi lưu!');
-            } finally {
-                btnSave.disabled = false;
-                btnSaveText.textContent = 'LƯU DỮ LIỆU SET OUT';
-                btnSave.classList.remove('opacity-75');
-            }
-        });
-    })();
-    </script>
+    <script src="~/js/pages/production2-setout.js" asp-append-version="true"></script>
 }

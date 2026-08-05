@@ -36,7 +36,7 @@ public class Production2Controller : Controller
     }
 
     // ============================================================
-    // 2. SET OUT — RA CHUYỀN
+    // 2. SET OUT — RA CHUYỀN THEO TỪNG CHI TIẾT (PART)
     // ============================================================
     [HttpGet]
     public IActionResult SetOut()
@@ -201,6 +201,19 @@ public class Production2Controller : Controller
         var user = COM_STT_WEB.Helpers.AuthHelper.GetCurrentUser(User);
         var empCd = user?.EmpCd ?? "N/A";
         var result = await _apiService.UpdateBasketDetailQtyAsync(basketId, partsNo, qty, empCd);
+        return Ok(new { success = result.Success, message = result.Message });
+    }
+
+    // ============================================================
+    // 8. SET OUT THEO CHI TIẾT — đánh dấu 1 nhóm part đã Out cho 1 nhà/line cụ thể
+    // ============================================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkBasketDetailOut([FromQuery] int basketId, [FromQuery] List<string> partsNo, [FromQuery] string outTo)
+    {
+        var user = COM_STT_WEB.Helpers.AuthHelper.GetCurrentUser(User);
+        var empCd = user?.EmpCd ?? "N/A";
+        var result = await _apiService.MarkPartsOutAsync(basketId, partsNo, outTo, empCd);
         return Ok(new { success = result.Success, message = result.Message });
     }
 

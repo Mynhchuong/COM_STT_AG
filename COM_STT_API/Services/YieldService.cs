@@ -52,18 +52,6 @@ public class YieldService
                 continue; // dòng này trùng y hệt 1 dòng khác đã xử lý trong cùng batch — bỏ qua
             }
 
-            // Set Out (OUTPUT): chỉ cho lưu khi basket của thẻ này đã đủ SET (C_QTY = SET_QTY).
-            // Không đạt thì bỏ qua thẻ này (không insert YIELD, không đánh dấu IS_OUT), báo lỗi rõ.
-            if (string.Equals(item.CAction, "OUTPUT", StringComparison.OrdinalIgnoreCase))
-            {
-                var (canOut, outMessage) = await _compSttSetService.TryMarkCardOutAsync(item.PcardNo ?? string.Empty, item.LineOut);
-                if (!canOut)
-                {
-                    outputErrors.Add(outMessage ?? $"PCard {item.PcardNo}: không thể Set Out.");
-                    continue;
-                }
-            }
-
             // Tăng nhẹ 1 giây giữa các dòng nếu cần để đảm bảo tính duy nhất của D_GATHER nếu trùng toàn bộ các cột khác
             var itemTime = now.AddSeconds(i).ToString("yyyyMMddHHmmss");
 

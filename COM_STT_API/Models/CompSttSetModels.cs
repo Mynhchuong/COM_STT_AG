@@ -53,8 +53,16 @@ public class CompSttSetHeaderRow
     [JsonPropertyName("DATE_OUT")]
     public DateTime? DateOut { get; set; }
 
-    [JsonPropertyName("LINEOUT")]
-    public string? LineOut { get; set; }
+    [JsonPropertyName("PROCESS_OUT")]
+    public string? ProcessOut { get; set; }
+
+    // Số part đã Out / tổng số part trong basket — để báo cáo theo PO hiện đúng basket nào đang
+    // Out DỞ (1 phần part đã Out, phần còn lại chưa) thay vì chỉ biết Out xong hay chưa Out gì.
+    [JsonPropertyName("PARTS_OUT")]
+    public int PartsOut { get; set; }
+
+    [JsonPropertyName("PARTS_TOTAL")]
+    public int PartsTotal { get; set; }
 }
 
 // 1 dòng / 1 part cần chuẩn bị trong basket (routing explosion)
@@ -95,4 +103,10 @@ public class CompSttSetDetailRow
 
     [JsonPropertyName("WORKER_ID")]
     public string? WorkerId { get; set; }
+
+    [JsonPropertyName("OUT_TO")]
+    public string? OutTo { get; set; }
+
+    [JsonPropertyName("IS_OUT")]
+    public string? IsOut { get; set; }
 }

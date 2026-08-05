@@ -94,7 +94,7 @@
 
     .legend-dot { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:middle; }
 
-    /* 3 cột nhóm thẻ theo trạng thái (Đã Out / Đang chờ nhận / Chưa nhận gì) */
+    /* 4 cột nhóm thẻ theo trạng thái (Đã Out / Đang Out dở / Đang chờ nhận / Chưa nhận gì) */
     .card-group-col { height: 100%; }
     .card-group-body { max-height: 340px; overflow-y: auto; }
     .card-item {
@@ -112,7 +112,7 @@
     .card-item .card-item-code { font-weight: 800; font-size: 0.9rem; color: #344767; }
     .card-item .card-item-meta { font-size: 0.72rem; color: #8898aa; }
     .card-item .card-item-progress { font-size: 0.75rem; font-weight: 700; }
-    .card-item .card-item-lineout { font-size: 0.75rem; font-weight: 700; color: #1a73e8; margin-top: 0.15rem; }
+    .card-item .card-item-outprogress { font-size: 0.75rem; font-weight: 700; color: #1a73e8; margin-top: 0.15rem; }
     .card-group-empty { text-align: center; color: #adb5bd; font-size: 0.8rem; padding: 1rem 0; }
     .card-group-pager { border-top: 1px solid #e9ecef; }
     .card-group-pager .btn { min-width: 76px; }
@@ -182,7 +182,7 @@
 
     <div class="col-12 mb-3" id="cardGroupsRow" style="display:none;">
         <div class="row g-3">
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-6 col-lg-3">
                 <div class="card border-radius-lg card-group-col">
                     <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-start justify-content-between bg-gradient-secondary text-white border-radius-lg">
                         <div>
@@ -199,7 +199,24 @@
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card border-radius-lg card-group-col">
+                    <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-start justify-content-between bg-gradient-info text-white border-radius-lg">
+                        <div>
+                            <div class="text-sm font-weight-bolder">🔶 ĐANG OUT DỞ</div>
+                            <div class="text-xs opacity-8">1 phần part đã Out, phần còn lại chưa</div>
+                        </div>
+                        <span class="badge bg-white text-dark" id="cntOutDoing">0</span>
+                    </div>
+                    <div class="card-body p-2 card-group-body" id="listOutDoing"></div>
+                    <div class="card-footer p-2 d-flex align-items-center justify-content-between card-group-pager" id="pagerOutDoing" style="display:none;">
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0 pager-prev">‹ Trước</button>
+                        <span class="text-xs text-secondary pager-label"></span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0 pager-next">Sau ›</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-3">
                 <div class="card border-radius-lg card-group-col">
                     <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-start justify-content-between bg-gradient-warning text-white border-radius-lg">
                         <div>
@@ -216,7 +233,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-6 col-lg-3">
                 <div class="card border-radius-lg card-group-col">
                     <div class="card-header pb-2 ps-3 pt-3 d-flex align-items-start justify-content-between bg-gradient-dark text-white border-radius-lg">
                         <div>

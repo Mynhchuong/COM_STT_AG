@@ -160,19 +160,23 @@
         }
 
         function cardItemHtml(row) {
-            const lineOutHtml = row.IS_OUT === 'Y' && row.LINEOUT
-                ? `<div class="card-item-lineout">🚚 Line: <strong>${row.LINEOUT}</strong></div>`
+            // Basket đang Out dở: hiện thêm số part đã Out/tổng part — vì basket này Out theo
+            // TỪNG PART (không phải cả thẻ 1 lần), riêng con số "SET_QTY/C_QTY" (tiến độ NHẬN
+            // hàng) không nói lên được việc nó đã bắt đầu Out.
+            const outProgressHtml = row.PROCESS_OUT === 'Y' && row.IS_OUT !== 'Y'
+                ? `<div class="card-item-outprogress">🔶 Đã Out ${row.PARTS_OUT || 0}/${row.PARTS_TOTAL || 0} part</div>`
                 : '';
             return `
                 <a href="/Production2/Pending2?basketId=${row.BASKET_ID}" class="card-item">
                     <div class="card-item-code">${row.I_CARD_NO || ''}</div>
                     <div class="card-item-meta">${row.C_STYLE || ''} · Size ${row.C_SIZE || ''}</div>
                     <div class="card-item-progress">${row.SET_QTY || 0}/${row.C_QTY || 0} pcs</div>
-                    ${lineOutHtml}
+                    ${outProgressHtml}
                 </a>`;
         }
 
         const pagerOut        = createCardPager('listOut', 'pagerOut', 'cntOut');
+        const pagerOutDoing    = createCardPager('listOutDoing', 'pagerOutDoing', 'cntOutDoing');
         const pagerPending     = createCardPager('listPending', 'pagerPending', 'cntPending');
         const pagerNotStarted  = createCardPager('listNotStarted', 'pagerNotStarted', 'cntNotStarted');
 
@@ -182,11 +186,15 @@
                 return;
             }
 
+            // Thứ tự ưu tiên phân loại: đã Out xong hết > đang Out dở (1 phần part) > đang nhận
+            // hàng (chưa Out gì) > chưa nhận gì.
             const outCards = rows.filter(r => r.IS_OUT === 'Y');
-            const pendingCards = rows.filter(r => r.IS_OUT !== 'Y' && (r.SET_QTY || 0) > 0);
-            const notStartedCards = rows.filter(r => r.IS_OUT !== 'Y' && (r.SET_QTY || 0) === 0);
+            const outDoingCards = rows.filter(r => r.IS_OUT !== 'Y' && r.PROCESS_OUT === 'Y');
+            const pendingCards = rows.filter(r => r.IS_OUT !== 'Y' && r.PROCESS_OUT !== 'Y' && (r.SET_QTY || 0) > 0);
+            const notStartedCards = rows.filter(r => r.IS_OUT !== 'Y' && r.PROCESS_OUT !== 'Y' && (r.SET_QTY || 0) === 0);
 
             pagerOut.setItems(outCards);
+            pagerOutDoing.setItems(outDoingCards);
             pagerPending.setItems(pendingCards);
             pagerNotStarted.setItems(notStartedCards);
 

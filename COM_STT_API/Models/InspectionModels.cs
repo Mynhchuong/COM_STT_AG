@@ -100,11 +100,6 @@ public class KeyinYieldItemDto
     // Mã PCard vừa quét — dùng để gọi MES.PROC_CREATE_COMPSTT_SET (không phải cột của TRTB_M_KEYIN_YIELD).
     [JsonPropertyName("PCARD_NO")]
     public string? PcardNo { get; set; }
-
-    // Line nhận hàng khi Set Out (VD "B-01".."B-30", "E-01".."E-30") — lưu vào cột LINEOUT của
-    // TRTB_M_COMPSTT_SET_HEADER, chỉ dùng khi C_ACTION='OUTPUT'.
-    [JsonPropertyName("LINE_OUT")]
-    public string? LineOut { get; set; }
 }
 
 public class KeyinYieldLogItem
